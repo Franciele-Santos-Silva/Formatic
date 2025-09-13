@@ -1,3 +1,3 @@
 # Teste
 
-É TRSITE
+É TRISTE
