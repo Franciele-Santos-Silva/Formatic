@@ -1,0 +1,2 @@
+Isntalar pacote supabase:
+(flutter pub add supabase_flutter)
