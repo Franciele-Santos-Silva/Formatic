@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SupabaseConfig {
   static Future<void> initialize() async {
@@ -10,3 +11,4 @@ class SupabaseConfig {
 
   static SupabaseClient get client => Supabase.instance.client;
 }
+ 
