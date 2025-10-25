@@ -1,59 +1,20 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await dotenv.load(fileName: ".env");
+  
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+
+  print(' Supabase inicializado!');
+  print(' Requisições no Insomnia');
+  
+
+  runApp(const MaterialApp(home: SizedBox.shrink()));
 }
-
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.light;
-
-  void _toggleTheme() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.light
-          ? ThemeMode.dark
-          : ThemeMode.light;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme(
-          brightness: Brightness.dark,
-          primary: Colors.blue.shade700,
-          onPrimary: Colors.white,
-          secondary: Colors.blue.shade200,
-          onSecondary: Colors.white,
-          error: Colors.red.shade400,
-          onError: Colors.white,
-          surface: const Color(0xFF232B36),
-          onSurface: Colors.white,
-        ),
-        appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF232B36)),
-        scaffoldBackgroundColor: const Color(0xFF232B36),
-        brightness: Brightness.dark,
-      ),
-      themeMode: _themeMode,
-      home: HomePage(
-        isDarkMode: _themeMode == ThemeMode.dark,
-        onThemeToggle: _toggleTheme,
-      ),
-    );
-  }
-}
-
-
