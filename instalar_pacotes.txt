@@ -1,2 +1,22 @@
 Isntalar pacote supabase:
 (flutter pub add supabase_flutter)
+
+rodar
+flutter run
+
+Profiles:
+
+Headers:
+  apikey: SUA_CHAVE_ANONIMA
+  Content-Type: application/json
+
+https://enenypufgzvuwyznkxat.supabase.co/rest/v1/profiles?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuZW55cHVmZ3p2dXd5em5reGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDgwMDksImV4cCI6MjA3NjkyNDAwOX0.U3xTNecMPuVdZhzfFTp4fKEPw3cgSUiAWxb6d8jAOWQ
+
+Criar conta
+POST https://enenypufgzvuwyznkxat.supabase.co/auth/v1/signup
+
+login
+POST https://enenypufgzvuwyznkxat.supabase.co/auth/v1/token?grant_type=password
+
+
+4fc4009e-e466-4eb6-823d-e88bb2a00a0a
