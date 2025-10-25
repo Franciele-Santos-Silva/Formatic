@@ -18,5 +18,7 @@ POST https://enenypufgzvuwyznkxat.supabase.co/auth/v1/signup
 login
 POST https://enenypufgzvuwyznkxat.supabase.co/auth/v1/token?grant_type=password
 
+tds campos
+https://enenypufgzvuwyznkxat.supabase.co/rest/v1/profiles
 
 4fc4009e-e466-4eb6-823d-e88bb2a00a0a
