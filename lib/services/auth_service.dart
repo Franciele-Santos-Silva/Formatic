@@ -5,26 +5,17 @@ class AuthService {
   final SupabaseClient client = SupabaseConfig.client;
 
   Future<AuthResponse> signUp(
-    String email, 
-    String password, 
+    String email,
+    String password,
     String username, {
     String? phone,
     String? avatarUrl,
   }) async {
-    final response = await client.auth.signUp(
-      email: email,
-      password: password,
-    );
+    final response = await client.auth.signUp(email: email, password: password);
 
-    if (response.user != null) {
-      await client.from('profiles').insert({
-        'username': username,
-        'password': password,
-        'email': email,
-        'phone': phone,
-        'avatar_url': avatarUrl,
-      });
-    }
+    // Profile creation is handled server-side via a database trigger.
+    // The app should not insert profiles directly to avoid RLS issues
+    // and duplicates. Return the raw signup response to the caller.
 
     return response;
   }

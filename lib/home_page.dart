@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_top_nav_bar.dart';
+import 'profile_page.dart';
 import 'task_manager_page.dart';
+import 'flashcard_page.dart';
+import 'assistant_page.dart';
 
 class HomePage extends StatefulWidget {
   final bool isDarkMode;
@@ -30,9 +33,15 @@ class _HomePageState extends State<HomePage> {
 
   late final List<Widget> _pages = [
     TaskManagerPage(isDarkMode: widget.isDarkMode),
-    const Center(child: Text('Flashcards')),
+    FlashcardPage(
+      isDarkMode: widget.isDarkMode,
+      onThemeToggle: widget.onThemeToggle,
+    ),
     const Center(child: Text('Home')),
-    const Center(child: Text('Assistente')),
+    AssistantPage(
+      isDarkMode: widget.isDarkMode,
+      onThemeToggle: widget.onThemeToggle,
+    ),
     const Center(child: Text('Bibliotecas')),
   ];
 
@@ -42,6 +51,17 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProfilePage(
+          isDarkMode: widget.isDarkMode,
+          onThemeToggle: widget.onThemeToggle,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,6 +69,7 @@ class _HomePageState extends State<HomePage> {
         title: _titles[_selectedIndex],
         isDarkMode: widget.isDarkMode,
         onThemeToggle: widget.onThemeToggle,
+        onProfileTap: _openProfile,
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: AppBottomNavBar(
@@ -58,5 +79,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-
