@@ -350,7 +350,6 @@ class _LoginPageState extends State<LoginPage> {
                               // Link "Esqueceu a senha?"
                               GestureDetector(
                                 onTap: () {
-                                  // TODO: Implementar funcionalidade de esqueceu senha
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
