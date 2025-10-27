@@ -1,3 +1,46 @@
+// import 'package:supabase_flutter/supabase_flutter.dart';
+// import 'supabase_config.dart';
+
+// class AuthService {
+//   final SupabaseClient client = SupabaseConfig.client;
+
+//   Future<AuthResponse> signUp(
+//     String email, 
+//     String password, 
+//     String username, {
+//     String? phone,
+//     String? avatarUrl,
+//   }) async {
+//     final response = await client.auth.signUp(
+//       email: email,
+//       password: password,
+//     );
+
+//     if (response.user != null) {
+//       await client.from('profiles').insert({
+//         'username': username,
+//         'password': password,
+//         'email': email,
+//         'phone': phone,
+//         'avatar_url': avatarUrl,
+//       });
+//     }
+
+//     return response;
+//   }
+
+//   Future<AuthResponse> signIn(String email, String password) async {
+//     return await client.auth.signInWithPassword(
+//       email: email,
+//       password: password,
+//     );
+//   }
+
+//   Future<void> signOut() async => await client.auth.signOut();
+
+//   User? get currentUser => client.auth.currentUser;
+// }
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_config.dart';
 
@@ -5,19 +48,35 @@ class AuthService {
   final SupabaseClient client = SupabaseConfig.client;
 
   Future<AuthResponse> signUp(
-    String email,
-    String password,
+    String email, 
+    String password, 
     String username, {
     String? phone,
     String? avatarUrl,
   }) async {
-    final response = await client.auth.signUp(email: email, password: password);
+    final response = await client.auth.signUp(
+      email: email,
+      password: password,
+    );
 
-    // Profile creation is handled server-side via a database trigger.
-    // The app should not insert profiles directly to avoid RLS issues
-    // and duplicates. Return the raw signup response to the caller.
+    if (response.user != null) {
+      await client.from('profiles').insert({
+        'id': response.user!.id,
+        'username': username,
+        'email': email,
+        'phone': phone,
+        'avatar_url': avatarUrl,
+      });
+    }
 
     return response;
+  }
+
+  Future<void> deleteUserAccount() async {
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    await client.rpc('delete_user_complete', params: {'user_id': userId});
   }
 
   Future<AuthResponse> signIn(String email, String password) async {
