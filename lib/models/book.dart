@@ -78,7 +78,7 @@ class BookTags {
   static const String sociologia = 'sociologia';
   static const String psicologia = 'psicologia';
 
-  // Tipo de conteúdo
+  /// Tipo de conteúdo
   static const String livroTexto = 'livro-texto';
   static const String livroExercicios = 'livro-de-exercicios';
   static const String teoria = 'teoria';
