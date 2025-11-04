@@ -66,7 +66,7 @@ class BookTags {
   static const String linguasELetras = 'linguas-e-letras';
   static const String direito = 'direito';
   static const String administracao = 'administracao';
-  
+
   // Disciplinas específicas
   static const String computacao = 'computacao';
   static const String matematica = 'matematica';
@@ -77,13 +77,13 @@ class BookTags {
   static const String filosofia = 'filosofia';
   static const String sociologia = 'sociologia';
   static const String psicologia = 'psicologia';
-  
+
   // Tipo de conteúdo
   static const String livroTexto = 'livro-texto';
   static const String livroExercicios = 'livro-de-exercicios';
   static const String teoria = 'teoria';
   static const String resumo = 'resumo';
-  
+
   // Nível
   static const String introducao = 'introducao';
   static const String intermediario = 'intermediario';
@@ -98,7 +98,7 @@ class BookTags {
     linguasELetras: 'Línguas e Letras',
     direito: 'Direito',
     administracao: 'Administração',
-    
+
     // Disciplinas
     computacao: 'Computação',
     matematica: 'Matemática',
@@ -109,13 +109,13 @@ class BookTags {
     filosofia: 'Filosofia',
     sociologia: 'Sociologia',
     psicologia: 'Psicologia',
-    
+
     // Tipo
     livroTexto: 'Livro-texto',
     livroExercicios: 'Exercícios',
     teoria: 'Teoria',
     resumo: 'Resumo',
-    
+
     // Nível
     introducao: 'Introdução',
     intermediario: 'Intermediário',
@@ -131,7 +131,7 @@ class BookTags {
     linguasELetras,
     direito,
     administracao,
-    
+
     // Disciplinas
     computacao,
     matematica,
@@ -142,13 +142,13 @@ class BookTags {
     filosofia,
     sociologia,
     psicologia,
-    
+
     // Tipo
     livroTexto,
     livroExercicios,
     teoria,
     resumo,
-    
+
     // Nível
     introducao,
     intermediario,

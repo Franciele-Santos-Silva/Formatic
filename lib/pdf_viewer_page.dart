@@ -98,7 +98,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   void _showPageNavigator() {
     final controller = TextEditingController(text: _currentPage.toString());
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -126,7 +126,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Página inválida. Digite um número entre 1 e $_totalPages'),
+                    content: Text(
+                      'Página inválida. Digite um número entre 1 e $_totalPages',
+                    ),
                   ),
                 );
               }
@@ -153,16 +155,16 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           children: [
             Text(
               widget.book.title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               'Por ${widget.book.author}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 16),
             Text(
@@ -197,7 +199,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 _InfoItem(
                   icon: Icons.language,
                   label: 'Idioma',
-                  value: widget.book.language == 'pt-BR' ? 'Português' : widget.book.language,
+                  value: widget.book.language == 'pt-BR'
+                      ? 'Português'
+                      : widget.book.language,
                 ),
               ],
             ),
@@ -210,10 +214,11 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Verifica se é URL ou asset
-    final isNetworkPdf = widget.book.pdfPath.startsWith('http://') || 
-                         widget.book.pdfPath.startsWith('https://');
+    final isNetworkPdf =
+        widget.book.pdfPath.startsWith('http://') ||
+        widget.book.pdfPath.startsWith('https://');
 
     return Scaffold(
       appBar: AppBar(
@@ -233,10 +238,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               if (value == 'fit-width') _fitWidth();
             },
             itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'fit-page',
-                child: Text('Ajustar à página'),
-              ),
+              PopupMenuItem(value: 'fit-page', child: Text('Ajustar à página')),
               PopupMenuItem(
                 value: 'fit-width',
                 child: Text('Ajustar à largura'),
@@ -258,71 +260,87 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                     ? GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onDoubleTap: _onDoubleTap,
-                        onHorizontalDragStart: _zoomLevel <= 1.05 ? _onHorizontalDragStart : null,
-                        onHorizontalDragUpdate: _zoomLevel <= 1.05 ? _onHorizontalDragUpdate : null,
-                        onHorizontalDragEnd: _zoomLevel <= 1.05 ? _onHorizontalDragEnd : null,
+                        onHorizontalDragStart: _zoomLevel <= 1.05
+                            ? _onHorizontalDragStart
+                            : null,
+                        onHorizontalDragUpdate: _zoomLevel <= 1.05
+                            ? _onHorizontalDragUpdate
+                            : null,
+                        onHorizontalDragEnd: _zoomLevel <= 1.05
+                            ? _onHorizontalDragEnd
+                            : null,
                         child: SfPdfViewer.network(
-                        widget.book.pdfPath,
-                        controller: _pdfViewerController,
-                        pageLayoutMode: PdfPageLayoutMode.single,
-                        canShowScrollHead: false,
-                        canShowScrollStatus: false,
-                        pageSpacing: 0,
-                        onDocumentLoaded: (details) {
-                          setState(() {
-                            _isLoading = false;
-                            _totalPages = details.document.pages.count;
-                          });
-                        },
-                        onDocumentLoadFailed: (details) {
-                          setState(() => _isLoading = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Erro ao carregar PDF: ${details.description}'),
-                              duration: const Duration(seconds: 5),
-                            ),
-                          );
-                        },
+                          widget.book.pdfPath,
+                          controller: _pdfViewerController,
+                          pageLayoutMode: PdfPageLayoutMode.single,
+                          canShowScrollHead: false,
+                          canShowScrollStatus: false,
+                          pageSpacing: 0,
+                          onDocumentLoaded: (details) {
+                            setState(() {
+                              _isLoading = false;
+                              _totalPages = details.document.pages.count;
+                            });
+                          },
+                          onDocumentLoadFailed: (details) {
+                            setState(() => _isLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Erro ao carregar PDF: ${details.description}',
+                                ),
+                                duration: const Duration(seconds: 5),
+                              ),
+                            );
+                          },
                         ),
                       )
                     : GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onDoubleTap: _onDoubleTap,
-                        onHorizontalDragStart: _zoomLevel <= 1.05 ? _onHorizontalDragStart : null,
-                        onHorizontalDragUpdate: _zoomLevel <= 1.05 ? _onHorizontalDragUpdate : null,
-                        onHorizontalDragEnd: _zoomLevel <= 1.05 ? _onHorizontalDragEnd : null,
+                        onHorizontalDragStart: _zoomLevel <= 1.05
+                            ? _onHorizontalDragStart
+                            : null,
+                        onHorizontalDragUpdate: _zoomLevel <= 1.05
+                            ? _onHorizontalDragUpdate
+                            : null,
+                        onHorizontalDragEnd: _zoomLevel <= 1.05
+                            ? _onHorizontalDragEnd
+                            : null,
                         child: SfPdfViewer.asset(
-                        widget.book.pdfPath,
-                        controller: _pdfViewerController,
-                        pageLayoutMode: PdfPageLayoutMode.single,
-                        canShowScrollHead: false,
-                        canShowScrollStatus: false,
-                        pageSpacing: 0,
-                        onDocumentLoaded: (details) {
-                          setState(() {
-                            _isLoading = false;
-                            _totalPages = details.document.pages.count;
-                          });
-                        },
-                        onDocumentLoadFailed: (details) {
-                          setState(() => _isLoading = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Erro ao carregar PDF: ${details.description}'),
-                              duration: const Duration(seconds: 5),
-                            ),
-                          );
+                          widget.book.pdfPath,
+                          controller: _pdfViewerController,
+                          pageLayoutMode: PdfPageLayoutMode.single,
+                          canShowScrollHead: false,
+                          canShowScrollStatus: false,
+                          pageSpacing: 0,
+                          onDocumentLoaded: (details) {
+                            setState(() {
+                              _isLoading = false;
+                              _totalPages = details.document.pages.count;
+                            });
+                          },
+                          onDocumentLoadFailed: (details) {
+                            setState(() => _isLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Erro ao carregar PDF: ${details.description}',
+                                ),
+                                duration: const Duration(seconds: 5),
+                              ),
+                            );
                           },
                         ),
                       ),
-                
+
                 // Loading indicator (usa surface do tema para não estourar no dark)
                 if (_isLoading)
                   Container(
-                    color: Theme.of(context).colorScheme.surface.withOpacity(0.6),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surface.withOpacity(0.6),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
               ],
             ),
@@ -344,14 +362,14 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                // Botão página anterior
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: _currentPage > 1
-                      ? () => _pdfViewerController.previousPage()
-                      : null,
-                  tooltip: 'Página anterior',
-                ),
+                  // Botão página anterior
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left),
+                    onPressed: _currentPage > 1
+                        ? () => _pdfViewerController.previousPage()
+                        : null,
+                    tooltip: 'Página anterior',
+                  ),
                   // Botão próxima página (logo ao lado da anterior)
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
@@ -364,48 +382,48 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   const SizedBox(width: 8),
 
                   // Indicador central (somente páginas)
-                InkWell(
-                  onTap: _totalPages > 0 ? _showPageNavigator : null,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _totalPages > 0
-                                ? 'Página $_currentPage de $_totalPages'
-                                : 'Carregando...',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
+                  InkWell(
+                    onTap: _totalPages > 0 ? _showPageNavigator : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _totalPages > 0
+                                  ? 'Página $_currentPage de $_totalPages'
+                                  : 'Carregando...',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                // Zoom - e Zoom + (lado a lado, na barra inferior)
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: _zoomLevel > 0.5 ? _zoomOut : null,
-                  tooltip: 'Diminuir zoom',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _zoomLevel < 5.0 ? _zoomIn : null,
-                  tooltip: 'Aumentar zoom',
-                ),
+                  const SizedBox(width: 8),
+                  // Zoom - e Zoom + (lado a lado, na barra inferior)
+                  IconButton(
+                    icon: const Icon(Icons.remove),
+                    onPressed: _zoomLevel > 0.5 ? _zoomOut : null,
+                    tooltip: 'Diminuir zoom',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: _zoomLevel < 5.0 ? _zoomIn : null,
+                    tooltip: 'Aumentar zoom',
+                  ),
                 ],
               ),
             ),
@@ -435,15 +453,15 @@ class _InfoItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
         ),
       ],
     );

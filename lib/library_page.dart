@@ -20,7 +20,7 @@ class LibraryPage extends StatefulWidget {
 class _LibraryPageState extends State<LibraryPage> {
   final BookService _bookService = BookService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<Book> _filteredBooks = [];
   final List<String> _selectedTags = [];
   bool _isLoading = true;
@@ -40,7 +40,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Future<void> _loadBooks() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final books = await _bookService.getAllBooks();
       setState(() {
@@ -50,16 +50,16 @@ class _LibraryPageState extends State<LibraryPage> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar livros: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao carregar livros: $e')));
       }
     }
   }
 
   Future<void> _applyFilters() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final results = await _bookService.searchAndFilter(
         _searchController.text,
@@ -97,10 +97,8 @@ class _LibraryPageState extends State<LibraryPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(
-          book: book,
-          isDarkMode: widget.isDarkMode,
-        ),
+        builder: (_) =>
+            PdfViewerPage(book: book, isDarkMode: widget.isDarkMode),
       ),
     );
   }
@@ -108,7 +106,7 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       children: [
         // Barra de busca e botão de filtros
@@ -174,9 +172,7 @@ class _LibraryPageState extends State<LibraryPage> {
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant,
-              ),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,7 +210,9 @@ class _LibraryPageState extends State<LibraryPage> {
                         color: isSelected
                             ? theme.colorScheme.onPrimaryContainer
                             : theme.colorScheme.onSurfaceVariant,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     );
                   }).toList(),
@@ -247,51 +245,51 @@ class _LibraryPageState extends State<LibraryPage> {
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _filteredBooks.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.library_books_outlined,
-                            size: 64,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Nenhum livro encontrado',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Tente ajustar os filtros',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.library_books_outlined,
+                        size: 64,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                    )
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: _getCrossAxisCount(context),
-                        // Deixa os cards um pouco mais altos para evitar overflow do conteúdo
-                        childAspectRatio: 0.62,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
+                      const SizedBox(height: 16),
+                      Text(
+                        'Nenhum livro encontrado',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                      itemCount: _filteredBooks.length,
-                      itemBuilder: (context, index) {
-                        final book = _filteredBooks[index];
-                        return _BookCard(
-                          book: book,
-                          isDarkMode: widget.isDarkMode,
-                          onTap: () => _openBook(book),
-                        );
-                      },
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tente ajustar os filtros',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: _getCrossAxisCount(context),
+                    // Deixa os cards um pouco mais altos para evitar overflow do conteúdo
+                    childAspectRatio: 0.62,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: _filteredBooks.length,
+                  itemBuilder: (context, index) {
+                    final book = _filteredBooks[index];
+                    return _BookCard(
+                      book: book,
+                      isDarkMode: widget.isDarkMode,
+                      onTap: () => _openBook(book),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -323,9 +321,7 @@ class _BookCard extends StatelessWidget {
 
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -353,7 +349,9 @@ class _BookCard extends StatelessWidget {
                     errorBuilder: (_, __, ___) => Icon(
                       Icons.book,
                       size: 48,
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
+                        0.6,
+                      ),
                     ),
                   ),
                 ),
@@ -379,7 +377,7 @@ class _BookCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Autor
                     Text(
                       book.author,
@@ -389,10 +387,10 @@ class _BookCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     // Espaço flexível substituído por espaço fixo para evitar overflow em alturas limítrofes
                     const SizedBox(height: 8),
-                    
+
                     // Primeira tag
                     if (book.tags.isNotEmpty)
                       Container(
@@ -401,11 +399,14 @@ class _BookCard extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withOpacity(0.4),
+                          color: theme.colorScheme.primaryContainer.withOpacity(
+                            0.4,
+                          ),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          BookTags.tagLabels[book.tags.first] ?? book.tags.first,
+                          BookTags.tagLabels[book.tags.first] ??
+                              book.tags.first,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onPrimaryContainer,
                             fontSize: 10,

@@ -10,11 +10,16 @@ class BookService {
       description: 'Livro/PDF de cálculo adicionado em assets/pdfs.',
       pdfPath: 'assets/pdfs/calculo.pdf',
       coverImageUrl: 'https://picsum.photos/seed/calc_user/200/300',
-      tags: [BookTags.matematica, BookTags.cienciasExatas, BookTags.livroTexto, BookTags.introducao],
+      tags: [
+        BookTags.matematica,
+        BookTags.cienciasExatas,
+        BookTags.livroTexto,
+        BookTags.introducao,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 30)),
       pageCount: 0,
     ),
-    
+
     Book(
       id: '3',
       title: 'Física I - Mecânica',
@@ -22,7 +27,12 @@ class BookService {
       description: 'Fundamentos de mecânica clássica',
       pdfPath: 'assets/pdfs/fisica1.pdf',
       coverImageUrl: 'https://picsum.photos/seed/fis1/200/300',
-      tags: [BookTags.fisica, BookTags.cienciasExatas, BookTags.livroTexto, BookTags.introducao],
+      tags: [
+        BookTags.fisica,
+        BookTags.cienciasExatas,
+        BookTags.livroTexto,
+        BookTags.introducao,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 20)),
       pageCount: 432,
     ),
@@ -33,7 +43,12 @@ class BookService {
       description: 'Química orgânica fundamental',
       pdfPath: 'assets/pdfs/quimica_organica.pdf',
       coverImageUrl: 'https://picsum.photos/seed/quim1/200/300',
-      tags: [BookTags.quimica, BookTags.cienciasExatas, BookTags.livroTexto, BookTags.intermediario],
+      tags: [
+        BookTags.quimica,
+        BookTags.cienciasExatas,
+        BookTags.livroTexto,
+        BookTags.intermediario,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 18)),
       pageCount: 624,
     ),
@@ -44,7 +59,12 @@ class BookService {
       description: 'Fundamentos da biologia celular e molecular',
       pdfPath: 'assets/pdfs/biologia_celular.pdf',
       coverImageUrl: 'https://picsum.photos/seed/bio1/200/300',
-      tags: [BookTags.biologia, BookTags.cienciasBiologicas, BookTags.livroTexto, BookTags.avancado],
+      tags: [
+        BookTags.biologia,
+        BookTags.cienciasBiologicas,
+        BookTags.livroTexto,
+        BookTags.avancado,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 15)),
       pageCount: 800,
     ),
@@ -55,7 +75,12 @@ class BookService {
       description: 'História concisa do Brasil',
       pdfPath: 'assets/pdfs/historia_brasil.pdf',
       coverImageUrl: 'https://picsum.photos/seed/hist1/200/300',
-      tags: [BookTags.historia, BookTags.cienciasHumanas, BookTags.livroTexto, BookTags.intermediario],
+      tags: [
+        BookTags.historia,
+        BookTags.cienciasHumanas,
+        BookTags.livroTexto,
+        BookTags.intermediario,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 12)),
       pageCount: 368,
     ),
@@ -66,7 +91,12 @@ class BookService {
       description: 'Convite à filosofia',
       pdfPath: 'assets/pdfs/filosofia_intro.pdf',
       coverImageUrl: 'https://picsum.photos/seed/filo1/200/300',
-      tags: [BookTags.filosofia, BookTags.cienciasHumanas, BookTags.livroTexto, BookTags.introducao],
+      tags: [
+        BookTags.filosofia,
+        BookTags.cienciasHumanas,
+        BookTags.livroTexto,
+        BookTags.introducao,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 10)),
       pageCount: 424,
     ),
@@ -77,7 +107,12 @@ class BookService {
       description: 'Fundamentos da sociologia moderna',
       pdfPath: 'assets/pdfs/sociologia.pdf',
       coverImageUrl: 'https://picsum.photos/seed/soc1/200/300',
-      tags: [BookTags.sociologia, BookTags.cienciasHumanas, BookTags.livroTexto, BookTags.intermediario],
+      tags: [
+        BookTags.sociologia,
+        BookTags.cienciasHumanas,
+        BookTags.livroTexto,
+        BookTags.intermediario,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 8)),
       pageCount: 512,
     ),
@@ -88,7 +123,12 @@ class BookService {
       description: 'Teoria do desenvolvimento cognitivo',
       pdfPath: 'assets/pdfs/psicologia_dev.pdf',
       coverImageUrl: 'https://picsum.photos/seed/psi1/200/300',
-      tags: [BookTags.psicologia, BookTags.cienciasHumanas, BookTags.teoria, BookTags.avancado],
+      tags: [
+        BookTags.psicologia,
+        BookTags.cienciasHumanas,
+        BookTags.teoria,
+        BookTags.avancado,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 6)),
       pageCount: 288,
     ),
@@ -99,7 +139,12 @@ class BookService {
       description: 'Introduction to Algorithms',
       pdfPath: 'assets/pdfs/algoritmos.pdf',
       coverImageUrl: 'https://picsum.photos/seed/algo1/200/300',
-      tags: [BookTags.computacao, BookTags.cienciasExatas, BookTags.livroTexto, BookTags.avancado],
+      tags: [
+        BookTags.computacao,
+        BookTags.cienciasExatas,
+        BookTags.livroTexto,
+        BookTags.avancado,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 5)),
       pageCount: 1312,
     ),
@@ -110,7 +155,12 @@ class BookService {
       description: 'Lista completa de exercícios resolvidos',
       pdfPath: 'assets/pdfs/exercicios_calculo.pdf',
       coverImageUrl: 'https://picsum.photos/seed/ex1/200/300',
-      tags: [BookTags.matematica, BookTags.cienciasExatas, BookTags.livroExercicios, BookTags.intermediario],
+      tags: [
+        BookTags.matematica,
+        BookTags.cienciasExatas,
+        BookTags.livroExercicios,
+        BookTags.intermediario,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 3)),
       pageCount: 184,
     ),
@@ -121,7 +171,12 @@ class BookService {
       description: 'Direito constitucional esquematizado',
       pdfPath: 'assets/pdfs/dir_constitucional.pdf',
       coverImageUrl: 'https://picsum.photos/seed/dir1/200/300',
-      tags: [BookTags.direito, BookTags.cienciasHumanas, BookTags.livroTexto, BookTags.intermediario],
+      tags: [
+        BookTags.direito,
+        BookTags.cienciasHumanas,
+        BookTags.livroTexto,
+        BookTags.intermediario,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 2)),
       pageCount: 896,
     ),
@@ -132,7 +187,12 @@ class BookService {
       description: 'Teoria geral da administração',
       pdfPath: 'assets/pdfs/administracao.pdf',
       coverImageUrl: 'https://picsum.photos/seed/adm1/200/300',
-      tags: [BookTags.administracao, BookTags.cienciasHumanas, BookTags.livroTexto, BookTags.introducao],
+      tags: [
+        BookTags.administracao,
+        BookTags.cienciasHumanas,
+        BookTags.livroTexto,
+        BookTags.introducao,
+      ],
       addedDate: DateTime.now().subtract(const Duration(days: 1)),
       pageCount: 624,
     ),
@@ -143,7 +203,12 @@ class BookService {
       description: 'Fundamentos de engenharia de software',
       pdfPath: 'assets/pdfs/eng_software.pdf',
       coverImageUrl: 'https://picsum.photos/seed/eng1/200/300',
-      tags: [BookTags.engenharias, BookTags.computacao, BookTags.livroTexto, BookTags.intermediario],
+      tags: [
+        BookTags.engenharias,
+        BookTags.computacao,
+        BookTags.livroTexto,
+        BookTags.intermediario,
+      ],
       addedDate: DateTime.now(),
       pageCount: 568,
     ),
@@ -154,7 +219,12 @@ class BookService {
       description: 'Resumo completo de física quântica',
       pdfPath: 'assets/pdfs/resumo_fisica_moderna.pdf',
       coverImageUrl: 'https://picsum.photos/seed/res1/200/300',
-      tags: [BookTags.fisica, BookTags.cienciasExatas, BookTags.resumo, BookTags.avancado],
+      tags: [
+        BookTags.fisica,
+        BookTags.cienciasExatas,
+        BookTags.resumo,
+        BookTags.avancado,
+      ],
       addedDate: DateTime.now(),
       pageCount: 96,
     ),
@@ -170,7 +240,7 @@ class BookService {
   // Buscar livros por texto (título, autor, descrição)
   Future<List<Book>> searchBooks(String query) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     if (query.isEmpty) {
       return _sampleBooks;
     }
@@ -178,15 +248,15 @@ class BookService {
     final lowerQuery = query.toLowerCase();
     return _sampleBooks.where((book) {
       return book.title.toLowerCase().contains(lowerQuery) ||
-             book.author.toLowerCase().contains(lowerQuery) ||
-             book.description.toLowerCase().contains(lowerQuery);
+          book.author.toLowerCase().contains(lowerQuery) ||
+          book.description.toLowerCase().contains(lowerQuery);
     }).toList();
   }
 
   // Filtrar livros por tags
   Future<List<Book>> filterByTags(List<String> selectedTags) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     if (selectedTags.isEmpty) {
       return _sampleBooks;
     }
@@ -198,9 +268,12 @@ class BookService {
   }
 
   // Buscar e filtrar combinados
-  Future<List<Book>> searchAndFilter(String query, List<String> selectedTags) async {
+  Future<List<Book>> searchAndFilter(
+    String query,
+    List<String> selectedTags,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     List<Book> results = _sampleBooks;
 
     // Aplicar busca por texto
@@ -208,8 +281,8 @@ class BookService {
       final lowerQuery = query.toLowerCase();
       results = results.where((book) {
         return book.title.toLowerCase().contains(lowerQuery) ||
-               book.author.toLowerCase().contains(lowerQuery) ||
-               book.description.toLowerCase().contains(lowerQuery);
+            book.author.toLowerCase().contains(lowerQuery) ||
+            book.description.toLowerCase().contains(lowerQuery);
       }).toList();
     }
 
@@ -226,7 +299,7 @@ class BookService {
   // Buscar livro por ID
   Future<Book?> getBookById(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
-    
+
     try {
       return _sampleBooks.firstWhere((book) => book.id == id);
     } catch (e) {
@@ -237,10 +310,10 @@ class BookService {
   // Obter livros recentes
   Future<List<Book>> getRecentBooks({int limit = 5}) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     final sortedBooks = List<Book>.from(_sampleBooks);
     sortedBooks.sort((a, b) => b.addedDate.compareTo(a.addedDate));
-    
+
     return sortedBooks.take(limit).toList();
   }
 }
