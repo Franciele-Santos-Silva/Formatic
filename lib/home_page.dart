@@ -5,6 +5,7 @@ import 'profile_page.dart';
 import 'task_manager_page.dart';
 import 'flashcard_page.dart';
 import 'assistant_page.dart';
+import 'library_page.dart';
 
 class HomePage extends StatefulWidget {
   final bool isDarkMode;
@@ -42,7 +43,10 @@ class _HomePageState extends State<HomePage> {
       isDarkMode: widget.isDarkMode,
       onThemeToggle: widget.onThemeToggle,
     ),
-    const Center(child: Text('Bibliotecas')),
+    LibraryPage(
+      isDarkMode: widget.isDarkMode,
+      onThemeToggle: widget.onThemeToggle,
+    ),
   ];
 
   void _onItemTapped(int index) {
