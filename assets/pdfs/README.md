@@ -27,7 +27,7 @@ Os seguintes livros estão configurados no sistema (você precisa adicionar os P
 4. `biologia_celular.pdf` - Biologia Celular
 5. `historia_brasil.pdf` - História do Brasil
 6. `filosofia_intro.pdf` - Introdução à Filosofia
-7. `sociologia.pdf` - Sociologia Geral
+7. `Medicina.pdf` - Medicina Geral
 8. `psicologia_dev.pdf` - Psicologia do Desenvolvimento
 9. `algoritmos.pdf` - Algoritmos e Estruturas de Dados
 10. `exercicios_calculo.pdf` - Exercícios de Cálculo

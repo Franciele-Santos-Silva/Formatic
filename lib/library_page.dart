@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'models/book.dart';
 import 'services/book_service.dart';
@@ -133,7 +135,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
-                    fillColor: theme.colorScheme.surfaceVariant,
+                    fillColor: theme.colorScheme.surfaceContainerHighest,
                   ),
                   onChanged: (_) => _applyFilters(),
                 ),
@@ -144,7 +146,7 @@ class _LibraryPageState extends State<LibraryPage> {
                 decoration: BoxDecoration(
                   color: _selectedTags.isNotEmpty
                       ? theme.colorScheme.primaryContainer
-                      : theme.colorScheme.surfaceVariant,
+                      : theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
@@ -203,7 +205,8 @@ class _LibraryPageState extends State<LibraryPage> {
                       label: Text(BookTags.tagLabels[tag] ?? tag),
                       selected: isSelected,
                       onSelected: (_) => _toggleTag(tag),
-                      backgroundColor: theme.colorScheme.surfaceVariant,
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
                       selectedColor: theme.colorScheme.primaryContainer,
                       checkmarkColor: theme.colorScheme.onPrimaryContainer,
                       labelStyle: TextStyle(
@@ -337,23 +340,13 @@ class _BookCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(12),
                   ),
-                  color: theme.colorScheme.surfaceVariant,
+                  color: theme.colorScheme.surfaceContainerHighest,
                 ),
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(12),
                   ),
-                  child: Image.network(
-                    book.coverImageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(
-                      Icons.book,
-                      size: 48,
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                        0.6,
-                      ),
-                    ),
-                  ),
+                  child: _buildCoverImage(book.coverImageUrl, theme),
                 ),
               ),
             ),
@@ -423,5 +416,32 @@ class _BookCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildCoverImage(String imageUrl, ThemeData theme) {
+    final isAsset =
+        !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://');
+
+    if (isAsset) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Icon(
+          Icons.book,
+          size: 48,
+          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+        ),
+      );
+    } else {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Icon(
+          Icons.book,
+          size: 48,
+          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+        ),
+      );
+    }
   }
 }

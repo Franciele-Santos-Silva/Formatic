@@ -75,7 +75,7 @@ class BookTags {
   static const String biologia = 'biologia';
   static const String historia = 'historia';
   static const String filosofia = 'filosofia';
-  static const String sociologia = 'sociologia';
+  static const String medicina = 'medicina';
   static const String psicologia = 'psicologia';
 
   /// Tipo de conteúdo
@@ -107,7 +107,7 @@ class BookTags {
     biologia: 'Biologia',
     historia: 'História',
     filosofia: 'Filosofia',
-    sociologia: 'Sociologia',
+    medicina: 'Medicina',
     psicologia: 'Psicologia',
 
     // Tipo
@@ -140,7 +140,7 @@ class BookTags {
     biologia,
     historia,
     filosofia,
-    sociologia,
+    medicina,
     psicologia,
 
     // Tipo

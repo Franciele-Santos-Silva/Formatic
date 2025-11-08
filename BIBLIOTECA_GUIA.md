@@ -37,7 +37,7 @@ Categorias disponíveis para filtrar:
 - Biologia
 - História
 - Filosofia
-- Sociologia
+- Medicina
 - Psicologia
 
 **Tipo de conteúdo:**
@@ -163,7 +163,7 @@ url_launcher: ^6.2.1                     # Abrir URLs
 5. Biologia Celular
 6. História do Brasil
 7. Introdução à Filosofia
-8. Sociologia Geral
+8. Medicina Geral
 9. Psicologia do Desenvolvimento
 10. Algoritmos e Estruturas de Dados
 11. Exercícios de Cálculo
