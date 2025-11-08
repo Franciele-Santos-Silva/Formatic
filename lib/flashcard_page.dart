@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:formatic/services/auth_service.dart';
 import 'package:formatic/services/flashcard_service.dart';
 import 'package:formatic/models/flashcard.dart';
-import 'package:formatic/login_page.dart';
+// Removed login_page import (logout tratado no AppTopNavBar)
 
 class FlashcardPage extends StatefulWidget {
   final bool isDarkMode;
@@ -23,7 +23,10 @@ class FlashcardPage extends StatefulWidget {
 class _FlashcardPageState extends State<FlashcardPage>
     with SingleTickerProviderStateMixin {
   final FlashcardService _flashcardService = FlashcardService();
+  // Paleta principal (roxo) - tom único consistente
+  static const Color primaryColor = Color(0xFF8B2CF5);
   List<Flashcard> _flashcards = [];
+  String _searchQuery = '';
   bool _loading = true;
   bool _isStudyMode = false;
   int _currentCardIndex = 0;
@@ -31,6 +34,8 @@ class _FlashcardPageState extends State<FlashcardPage>
 
   final _questionController = TextEditingController();
   final _answerController = TextEditingController();
+
+  bool get _isDarkTheme => Theme.of(context).brightness == Brightness.dark;
 
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
@@ -152,107 +157,236 @@ class _FlashcardPageState extends State<FlashcardPage>
   void _showAddFlashcardDialog() {
     _questionController.clear();
     _answerController.clear();
+    // Use o tema atual para detectar modo escuro, evitando depender de widget.isDarkMode
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.transparent,
         child: Container(
-          padding: const EdgeInsets.all(24),
-          constraints: const BoxConstraints(maxWidth: 500),
+          padding: const EdgeInsets.all(28),
+          constraints: const BoxConstraints(maxWidth: 550),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [Colors.grey[850]!, Colors.grey[900]!]
+                  : [Colors.white, Colors.grey[50]!],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 15),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
-                      Icons.add_card,
-                      color: Colors.blue,
+                      Icons.add_rounded,
+                      color: Colors.white,
                       size: 28,
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    'Novo Flashcard',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Novo Flashcard',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Crie um novo card de estudo',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark ? Colors.white60 : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _questionController,
-                decoration: InputDecoration(
-                  labelText: 'Pergunta',
-                  hintText: 'Digite a pergunta do flashcard',
-                  prefixIcon: const Icon(Icons.help_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: widget.isDarkMode
-                      ? Colors.grey[800]
-                      : Colors.grey[100],
+
+              const SizedBox(height: 28),
+
+              // Campo Pergunta
+              Text(
+                'Pergunta',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: primaryColor,
+                  letterSpacing: 0.5,
                 ),
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _answerController,
-                decoration: InputDecoration(
-                  labelText: 'Resposta',
-                  hintText: 'Digite a resposta do flashcard',
-                  prefixIcon: const Icon(Icons.check_circle_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: widget.isDarkMode
-                      ? Colors.grey[800]
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.grey[800]!.withOpacity(0.5)
                       : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.2),
+                  ),
                 ),
-                maxLines: 4,
-                textCapitalization: TextCapitalization.sentences,
+                child: TextField(
+                  controller: _questionController,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Ex: O que é Flutter?',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.grey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.help_outline_rounded,
+                      color: primaryColor.withOpacity(0.7),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
               ),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: 20),
+
+              // Campo Resposta
+              Text(
+                'Resposta',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: primaryColor,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.grey[800]!.withOpacity(0.5)
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.2),
+                  ),
+                ),
+                child: TextField(
+                  controller: _answerController,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Ex: Framework UI multiplataforma do Google',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.grey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lightbulb_outline_rounded,
+                      color: primaryColor.withOpacity(0.7),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // Botões
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey[300]!,
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                    child: const Text('Cancelar'),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _addFlashcard();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _addFlashcard();
+                      },
+                      icon: const Icon(Icons.add_rounded, color: Colors.white),
+                      label: const Text(
+                        'Criar Flashcard',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                    child: const Text('Adicionar'),
                   ),
                 ],
               ),
@@ -266,114 +400,246 @@ class _FlashcardPageState extends State<FlashcardPage>
   void _showEditFlashcardDialog(Flashcard flashcard) {
     _questionController.text = flashcard.question;
     _answerController.text = flashcard.answer;
+    // Detecta o modo a partir do tema atual
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.transparent,
         child: Container(
-          padding: const EdgeInsets.all(24),
-          constraints: const BoxConstraints(maxWidth: 500),
+          padding: const EdgeInsets.all(28),
+          constraints: const BoxConstraints(maxWidth: 550),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [Colors.grey[850]!, Colors.grey[900]!]
+                  : [Colors.white, Colors.grey[50]!],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 15),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
-                      Icons.edit,
-                      color: Colors.orange,
+                      Icons.edit_rounded,
+                      color: Colors.white,
                       size: 28,
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    'Editar Flashcard',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Editar Flashcard',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Atualize as informações do card',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark ? Colors.white60 : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _questionController,
-                decoration: InputDecoration(
-                  labelText: 'Pergunta',
-                  hintText: 'Digite a pergunta do flashcard',
-                  prefixIcon: const Icon(Icons.help_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: widget.isDarkMode
-                      ? Colors.grey[800]
-                      : Colors.grey[100],
+
+              const SizedBox(height: 28),
+
+              // Campo Pergunta
+              Text(
+                'Pergunta',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: primaryColor,
+                  letterSpacing: 0.5,
                 ),
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _answerController,
-                decoration: InputDecoration(
-                  labelText: 'Resposta',
-                  hintText: 'Digite a resposta do flashcard',
-                  prefixIcon: const Icon(Icons.check_circle_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: widget.isDarkMode
-                      ? Colors.grey[800]
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.grey[800]!.withOpacity(0.5)
                       : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.2),
+                  ),
                 ),
-                maxLines: 4,
-                textCapitalization: TextCapitalization.sentences,
+                child: TextField(
+                  controller: _questionController,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Digite a pergunta do flashcard',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.grey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.help_outline_rounded,
+                      color: primaryColor.withOpacity(0.7),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
               ),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: 20),
+
+              // Campo Resposta
+              Text(
+                'Resposta',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: primaryColor,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.grey[800]!.withOpacity(0.5)
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.2),
+                  ),
+                ),
+                child: TextField(
+                  controller: _answerController,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Digite a resposta do flashcard',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.grey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lightbulb_outline_rounded,
+                      color: primaryColor.withOpacity(0.7),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // Botões
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey[300]!,
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                    child: const Text('Cancelar'),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      final updatedFlashcard = Flashcard(
-                        id: flashcard.id,
-                        userId: flashcard.userId,
-                        question: _questionController.text.trim(),
-                        answer: _answerController.text.trim(),
-                        createdAt: flashcard.createdAt,
-                      );
-                      Navigator.of(context).pop();
-                      _updateFlashcard(updatedFlashcard);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final updatedFlashcard = Flashcard(
+                          id: flashcard.id,
+                          userId: flashcard.userId,
+                          question: _questionController.text.trim(),
+                          answer: _answerController.text.trim(),
+                          createdAt: flashcard.createdAt,
+                        );
+                        Navigator.of(context).pop();
+                        _updateFlashcard(updatedFlashcard);
+                      },
+                      icon: const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      label: const Text(
+                        'Salvar Alterações',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                    child: const Text('Salvar'),
                   ),
                 ],
               ),
@@ -385,37 +651,213 @@ class _FlashcardPageState extends State<FlashcardPage>
   }
 
   void _showDeleteConfirmation(Flashcard flashcard) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-            SizedBox(width: 12),
-            Text('Confirmar Exclusão'),
-          ],
-        ),
-        content: const Text(
-          'Tem certeza que deseja deletar este flashcard? Esta ação não pode ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _deleteFlashcard(flashcard);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          constraints: const BoxConstraints(maxWidth: 450),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [Colors.grey[850]!, Colors.grey[900]!]
+                  : [Colors.white, Colors.grey[50]!],
             ),
-            child: const Text('Deletar'),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 15),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Ícone de aviso
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.red.withOpacity(0.15),
+                      Colors.red.withOpacity(0.1),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.red.withOpacity(0.2),
+                        Colors.red.withOpacity(0.15),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_rounded,
+                    color: Colors.red,
+                    size: 48,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              Text(
+                'Excluir Flashcard?',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                'Esta ação não pode ser desfeita. O flashcard será permanentemente removido.',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isDark ? Colors.white60 : Colors.grey[600],
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 28),
+
+              // Prévia do flashcard
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.help_outline_rounded,
+                          size: 16,
+                          color: isDark ? Colors.white60 : Colors.grey[600],
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            flashcard.question,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // Botões
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey[300]!,
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _deleteFlashcard(flashcard);
+                        },
+                        icon: const Icon(
+                          Icons.delete_rounded,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Excluir',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -453,120 +895,94 @@ class _FlashcardPageState extends State<FlashcardPage>
 
     final currentCard = _flashcards[_currentCardIndex];
 
-    return Column(
-      children: [
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: _isDarkTheme
+              ? [Colors.grey[900]!, Colors.grey[850]!]
+              : [Colors.grey[50]!, Colors.white],
+        ),
+      ),
+      child: Column(
+        children: [
+          // Header do modo estudo
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            decoration: BoxDecoration(
+              color: _isDarkTheme
+                  ? Colors.grey[850]!.withOpacity(0.5)
+                  : Colors.white.withOpacity(0.9),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
                 children: [
-                  Text(
-                    'Card ${_currentCardIndex + 1} de ${_flashcards.length}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: widget.isDarkMode
-                          ? Colors.white70
-                          : Colors.black87,
+                  IconButton(
+                    onPressed: () => setState(() {
+                      _isStudyMode = false;
+                      _flipController.reset();
+                      _showAnswer = false;
+                    }),
+                    icon: Icon(
+                      Icons.arrow_back_rounded,
+                      color: _isDarkTheme ? Colors.white : Colors.black87,
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: _isDarkTheme
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.1),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(width: 16),
                   Expanded(
-                    child: GestureDetector(
-                      onTap: _flipCard,
-                      child: AnimatedBuilder(
-                        animation: _flipAnimation,
-                        builder: (context, child) {
-                          final angle = _flipAnimation.value * 3.14159;
-                          final isFront = angle < 1.5708;
-
-                          return Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.001)
-                              ..rotateY(angle),
-                            child: Container(
-                              constraints: const BoxConstraints(
-                                maxWidth: 600,
-                                maxHeight: 400,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: isFront
-                                      ? [
-                                          Colors.blue.shade400,
-                                          Colors.blue.shade700,
-                                        ]
-                                      : [
-                                          Colors.green.shade400,
-                                          Colors.green.shade700,
-                                        ],
-                                ),
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              child: Transform(
-                                alignment: Alignment.center,
-                                transform: Matrix4.identity()
-                                  ..rotateY(isFront ? 0 : 3.14159),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(32),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        isFront ? 'PERGUNTA' : 'RESPOSTA',
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      Expanded(
-                                        child: Center(
-                                          child: SingleChildScrollView(
-                                            child: Text(
-                                              isFront
-                                                  ? currentCard.question
-                                                  : currentCard.answer,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.w500,
-                                                height: 1.5,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      Icon(
-                                        isFront
-                                            ? Icons.help_outline
-                                            : Icons.check_circle_outline,
-                                        color: Colors.white70,
-                                        size: 32,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Modo Estudo',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: _isDarkTheme ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Card ${_currentCardIndex + 1} de ${_flashcards.length}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: _isDarkTheme
+                                ? Colors.white60
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${((_currentCardIndex + 1) / _flashcards.length * 100).toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -574,100 +990,218 @@ class _FlashcardPageState extends State<FlashcardPage>
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              FloatingActionButton(
-                heroTag: 'previous',
-                onPressed: _previousCard,
-                backgroundColor: widget.isDarkMode
-                    ? Colors.grey[800]
-                    : Colors.white,
-                child: Icon(
-                  Icons.arrow_back,
-                  color: widget.isDarkMode ? Colors.white : Colors.black,
-                ),
-              ),
-              FloatingActionButton.extended(
-                heroTag: 'flip',
-                onPressed: _flipCard,
-                backgroundColor: Colors.blue,
-                icon: const Icon(Icons.flip, color: Colors.white),
-                label: const Text(
-                  'Virar',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+
+          // Progress bar
+          Container(
+            height: 4,
+            color: _isDarkTheme ? Colors.grey[800] : Colors.grey[200],
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: (_currentCardIndex + 1) / _flashcards.length,
+              child: Container(color: primaryColor),
+            ),
+          ),
+
+          // Card área
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: GestureDetector(
+                  onTap: _flipCard,
+                  child: AnimatedBuilder(
+                    animation: _flipAnimation,
+                    builder: (context, child) {
+                      final angle = _flipAnimation.value * 3.14159;
+                      final isFront = angle < 1.5708;
+
+                      return Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.identity()
+                          ..setEntry(3, 2, 0.001)
+                          ..rotateY(angle),
+                        child: Container(
+                          constraints: const BoxConstraints(
+                            maxWidth: 600,
+                            maxHeight: 500,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                          child: Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..rotateY(isFront ? 0 : 3.14159),
+                            child: Padding(
+                              padding: const EdgeInsets.all(40),
+                              child: Column(
+                                children: [
+                                  // Badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isFront
+                                              ? Icons.help_outline_rounded
+                                              : Icons.lightbulb_outline_rounded,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          isFront ? 'PERGUNTA' : 'RESPOSTA',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 32),
+
+                                  // Conteúdo
+                                  Expanded(
+                                    child: Center(
+                                      child: SingleChildScrollView(
+                                        child: Text(
+                                          isFront
+                                              ? currentCard.question
+                                              : currentCard.answer,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.5,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 32),
+
+                                  // Ícone indicador
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.15),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      isFront
+                                          ? Icons.psychology_rounded
+                                          : Icons.check_circle_rounded,
+                                      color: Colors.white,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
-              FloatingActionButton(
-                heroTag: 'next',
-                onPressed: _nextCard,
-                backgroundColor: widget.isDarkMode
-                    ? Colors.grey[800]
-                    : Colors.white,
-                child: Icon(
-                  Icons.arrow_forward,
-                  color: widget.isDarkMode ? Colors.white : Colors.black,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+          // Controles
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              shape: BoxShape.circle,
+              color: _isDarkTheme
+                  ? Colors.grey[850]!.withOpacity(0.5)
+                  : Colors.white.withOpacity(0.9),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-            child: Icon(
-              Icons.quiz_outlined,
-              size: 80,
-              color: Colors.blue.withOpacity(0.5),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Nenhum flashcard encontrado',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: widget.isDarkMode ? Colors.white70 : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Crie seu primeiro flashcard para começar a estudar!',
-            style: TextStyle(
-              fontSize: 14,
-              color: widget.isDarkMode ? Colors.white54 : Colors.grey[600],
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: _showAddFlashcardDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Criar Flashcard'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Botão anterior
+                  Container(
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: _previousCard,
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                      ),
+                      iconSize: 28,
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
+
+                  // Botão virar (principal)
+                  ElevatedButton.icon(
+                    onPressed: _flipCard,
+                    icon: const Icon(Icons.flip_rounded, color: Colors.white),
+                    label: const Text(
+                      'Virar Card',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+
+                  // Botão próximo
+                  Container(
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: _nextCard,
+                      icon: const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                      ),
+                      iconSize: 28,
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -676,276 +1210,644 @@ class _FlashcardPageState extends State<FlashcardPage>
     );
   }
 
-  Widget _buildListView() {
-    if (_flashcards.isEmpty) {
-      return _buildEmptyState();
-    }
-
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+  Widget _buildEmptyState() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: _isDarkTheme
+              ? [Colors.grey[900]!, Colors.grey[850]!]
+              : [Colors.grey[50]!, Colors.white],
+        ),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
+              // Ícone animado
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: primaryColor.withOpacity(0.12),
+                    shape: BoxShape.circle,
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.style, color: Colors.blue),
-                      const SizedBox(width: 12),
-                      Text(
-                        '${_flashcards.length} ${_flashcards.length == 1 ? "Flashcard" : "Flashcards"}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
+                  child: Icon(
+                    Icons.auto_stories_rounded,
+                    size: 80,
+                    color: primaryColor,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+
+              const SizedBox(height: 40),
+
+              Text(
+                'Nenhum Flashcard Ainda',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: _isDarkTheme ? Colors.white : Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(
+                'Crie seu primeiro flashcard e comece\nsua jornada de aprendizado!',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: _isDarkTheme ? Colors.white60 : Colors.grey[600],
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 48),
+
+              // Botão de criar
               ElevatedButton.icon(
-                onPressed: () => setState(() => _isStudyMode = true),
-                icon: const Icon(Icons.school),
-                label: const Text('Estudar'),
+                onPressed: _showAddFlashcardDialog,
+                icon: const Icon(
+                  Icons.add_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                label: const Text(
+                  'Criar Primeiro Flashcard',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
+                  backgroundColor: primaryColor,
+                  shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+                    horizontal: 32,
+                    vertical: 20,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Dicas
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: _isDarkTheme
+                      ? Colors.grey[850]!.withOpacity(0.5)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _isDarkTheme
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _buildTipItem(
+                      Icons.lightbulb_outline_rounded,
+                      'Estude de forma eficiente',
+                      'Use flashcards para memorizar conceitos importantes',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTipItem(
+                      Icons.refresh_rounded,
+                      'Revise regularmente',
+                      'A repetição espaçada melhora a retenção',
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTipItem(IconData icon, String title, String description) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: primaryColor, size: 20),
+        ),
+        const SizedBox(width: 16),
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: _loadFlashcards,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _flashcards.length,
-              itemBuilder: (context, index) {
-                final flashcard = _flashcards[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: _isDarkTheme ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _isDarkTheme ? Colors.white60 : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListView() {
+    final bool isDark = _isDarkTheme;
+    // Filtro de busca
+    final filteredFlashcards = _searchQuery.isEmpty
+        ? _flashcards
+        : _flashcards
+              .where(
+                (f) =>
+                    f.question.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    ) ||
+                    f.answer.toLowerCase().contains(_searchQuery.toLowerCase()),
+              )
+              .toList();
+    final baseTextColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+
+    if (_flashcards.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? const [Color(0xFF10121B), Color(0xFF161828)]
+              : const [Color(0xFFF6F2FF), Colors.white],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 16),
+          // Barra de pesquisa no topo
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.black12,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.35)
+                        : primaryColor.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   ),
-                  child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    childrenPadding: const EdgeInsets.all(20),
-                    leading: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.quiz, color: Colors.blue),
-                    ),
-                    title: Text(
-                      flashcard.question,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Row(
+                ],
+              ),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Buscar por perguntas ou respostas... ',
+                  hintStyle: TextStyle(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.5)
+                        : Colors.black45,
+                    fontSize: 15,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    size: 24,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear_rounded,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                ),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                onChanged: (v) {
+                  setState(() {
+                    _searchQuery = v;
+                  });
+                },
+              ),
+            ),
+          ),
+
+          // Header moderno com estatísticas
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Meus flashcards',
+                  style: TextStyle(
+                    color: baseTextColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Total de ${filteredFlashcards.length} ${filteredFlashcards.length == 1 ? "card disponível" : "cards disponíveis"}',
+                  style: TextStyle(
+                    color: secondaryTextColor,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Lista de flashcards com design moderno
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadFlashcards,
+              color: primaryColor,
+              child: filteredFlashcards.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.calendar_today,
-                            size: 14,
-                            color: Colors.grey[600],
+                            Icons.search_off_rounded,
+                            size: 64,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.35)
+                                : Colors.black26,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(height: 16),
                           Text(
-                            '${flashcard.createdAt.day.toString().padLeft(2, '0')}/${flashcard.createdAt.month.toString().padLeft(2, '0')}/${flashcard.createdAt.year}',
+                            'Nenhum resultado encontrado',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                              color: isDark ? Colors.white70 : Colors.black87,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tente ajustar sua busca',
+                            style: TextStyle(
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontSize: 14,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.orange),
-                          onPressed: () => _showEditFlashcardDialog(flashcard),
-                          tooltip: 'Editar',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _showDeleteConfirmation(flashcard),
-                          tooltip: 'Deletar',
-                        ),
-                      ],
-                    ),
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 20,
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                      itemCount: filteredFlashcards.length,
+                      itemBuilder: (context, index) {
+                        final flashcard = filteredFlashcards[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 18),
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Theme(
+                            data: Theme.of(context).copyWith(
+                              dividerColor: Colors.transparent,
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              iconTheme: const IconThemeData(
+                                color: Colors.white,
+                              ),
+                              textTheme: Theme.of(context).textTheme.apply(
+                                bodyColor: Colors.white,
+                                displayColor: Colors.white,
+                              ),
+                            ),
+                            child: ExpansionTile(
+                              iconColor: Colors.white,
+                              collapsedIconColor: Colors.white.withOpacity(
+                                0.85,
+                              ),
+                              tilePadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
+                              childrenPadding: const EdgeInsets.fromLTRB(
+                                20,
+                                0,
+                                20,
+                                20,
+                              ),
+                              leading: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'RESPOSTA',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                    letterSpacing: 1,
+                                child: const Icon(
+                                  Icons.psychology_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              title: Text(
+                                flashcard.question,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  height: 1.4,
+                                ),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${flashcard.createdAt.day.toString().padLeft(2, '0')}/${flashcard.createdAt.month.toString().padLeft(2, '0')}/${flashcard.createdAt.year}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              trailing: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit_rounded,
+                                        color: Colors.white,
+                                        size: 22,
+                                      ),
+                                      onPressed: () =>
+                                          _showEditFlashcardDialog(flashcard),
+                                      tooltip: 'Editar',
+                                      splashRadius: 24,
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete_rounded,
+                                        color: Colors.white.withOpacity(0.9),
+                                        size: 22,
+                                      ),
+                                      onPressed: () =>
+                                          _showDeleteConfirmation(flashcard),
+                                      tooltip: 'Deletar',
+                                      splashRadius: 24,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(top: 14),
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(
+                                                0.18,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Icon(
+                                              Icons.lightbulb_rounded,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          const Text(
+                                            'RESPOSTA',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              letterSpacing: 1.6,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        flashcard.answer,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          height: 1.6,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              flashcard.answer,
-                              style: const TextStyle(fontSize: 16, height: 1.5),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                          ),
+                        );
+                      },
+                    ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _isStudyMode ? 'Modo Estudo' : 'Flashcards',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        leading: _isStudyMode
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => setState(() {
-                  _isStudyMode = false;
-                  _flipController.reset();
-                  _showAnswer = false;
-                }),
-                tooltip: 'Voltar',
-              )
-            : null,
-        actions: [
-          IconButton(
-            icon: Icon(widget.isDarkMode ? Icons.dark_mode : Icons.light_mode),
-            onPressed: widget.onThemeToggle,
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sair',
-            onPressed: () => _showLogoutDialog(context),
-          ),
-        ],
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-      ),
+      backgroundColor: _isDarkTheme ? const Color(0xFF0B0A11) : Colors.white,
+      // AppBar removido: a HomePage já fornece o AppBar global (AppTopNavBar)
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _isStudyMode
-          ? _buildStudyModeView()
-          : _buildListView(),
-      floatingActionButton: _isStudyMode
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _showAddFlashcardDialog,
-              icon: const Icon(Icons.add),
-              label: const Text('Novo Flashcard'),
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
+          : Stack(
+              children: [
+                _isStudyMode ? _buildStudyModeView() : _buildListView(),
+                if (!_isStudyMode && _flashcards.isNotEmpty)
+                  _buildBottomButtonsBar(),
+              ],
             ),
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.logout, color: Colors.red),
-              SizedBox(width: 12),
-              Text('Sair'),
-            ],
-          ),
-          content: const Text('Tem certeza que deseja sair?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await AuthService().signOut();
-                if (!context.mounted) return;
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        LoginPage(isDarkMode: false, onThemeToggle: () {}),
+  // Barra de ações fixa no rodapé: dois botões lado a lado com design moderno
+  Widget _buildBottomButtonsBar() {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 20,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    disabledBackgroundColor: primaryColor.withOpacity(0.35),
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  (route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                  onPressed: _flashcards.isEmpty
+                      ? null
+                      : () => setState(() => _isStudyMode = true),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.school_rounded,
+                        color: _flashcards.isEmpty
+                            ? Colors.white.withOpacity(0.6)
+                            : Colors.white,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Estudar',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: _flashcards.isEmpty
+                              ? Colors.white.withOpacity(0.6)
+                              : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: const Text('Sair'),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: _showAddFlashcardDialog,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.add_rounded, color: Colors.white, size: 24),
+                      SizedBox(width: 12),
+                      Text(
+                        'Novo Card',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
+
+  // Logout agora é tratado pelo AppTopNavBar da HomePage. Método removido.
 
   @override
   void dispose() {

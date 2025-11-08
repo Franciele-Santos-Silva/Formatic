@@ -17,11 +17,8 @@ class TaskCardModern extends StatelessWidget {
     return Container(
       width: 160,
       decoration: BoxDecoration(
-        color: Color(0xFF8B2CF5),
+        color: const Color(0xFF8B2CF5),
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
-        ],
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -31,7 +28,7 @@ class TaskCardModern extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.task, color: Color(0xFF8B2CF5)),
+                child: const Icon(Icons.task, color: Color(0xFF8B2CF5)),
               ),
               const SizedBox(width: 8),
               Expanded(
