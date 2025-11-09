@@ -32,22 +32,30 @@ class _HomePageState extends State<HomePage> {
     'Bibliotecas',
   ];
 
-  late final List<Widget> _pages = [
-    TaskManagerPage(isDarkMode: widget.isDarkMode),
-    FlashcardPage(
-      isDarkMode: widget.isDarkMode,
-      onThemeToggle: widget.onThemeToggle,
-    ),
-    const Center(child: Text('Home')),
-    AssistantPage(
-      isDarkMode: widget.isDarkMode,
-      onThemeToggle: widget.onThemeToggle,
-    ),
-    LibraryPage(
-      isDarkMode: widget.isDarkMode,
-      onThemeToggle: widget.onThemeToggle,
-    ),
-  ];
+  Widget _pageForIndex(int index) {
+    switch (index) {
+      case 0:
+        return TaskManagerPage(isDarkMode: widget.isDarkMode);
+      case 1:
+        return FlashcardPage(
+          isDarkMode: widget.isDarkMode,
+          onThemeToggle: widget.onThemeToggle,
+        );
+      case 2:
+        return const Center(child: Text('Home'));
+      case 3:
+        return AssistantPage(
+          isDarkMode: widget.isDarkMode,
+          onThemeToggle: widget.onThemeToggle,
+        );
+      case 4:
+      default:
+        return LibraryPage(
+          isDarkMode: widget.isDarkMode,
+          onThemeToggle: widget.onThemeToggle,
+        );
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -75,7 +83,7 @@ class _HomePageState extends State<HomePage> {
         onThemeToggle: widget.onThemeToggle,
         onProfileTap: _openProfile,
       ),
-      body: _pages[_selectedIndex],
+      body: _pageForIndex(_selectedIndex),
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

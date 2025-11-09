@@ -1,8 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:formatic/services/auth_service.dart';
-import 'package:formatic/services/ai_history_service.dart';
-import 'package:formatic/models/ai_history.dart';
-import 'widgets/app_top_nav_bar.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
 class AssistantPage extends StatefulWidget {
   final bool isDarkMode;
@@ -19,288 +19,291 @@ class AssistantPage extends StatefulWidget {
 }
 
 class _AssistantPageState extends State<AssistantPage> {
-  final AiHistoryService _aiHistoryService = AiHistoryService();
-  List<AiHistory> _history = [];
-  bool _loading = true;
+  static const _helpyName = 'Helpy';
+  static const _systemPrompt =
+      'Você é Helpy, a tutora virtual da Formatic focada em apoiar estudantes. '
+      'Forneça explicações claras, objetivas e em português, reforce técnicas de organização '
+      'e proponha próximas etapas ou exercícios práticos sempre que possível.';
+
+  final List<_ChatMessage> _messages = <_ChatMessage>[];
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _sendingMessage = false;
-  final _messageController = TextEditingController();
-  final _scrollController = ScrollController();
+  String? _apiKey;
 
   @override
   void initState() {
     super.initState();
-    _loadHistory();
-  }
-
-  Future<void> _loadHistory() async {
-    setState(() => _loading = true);
-
-    try {
-      final user = AuthService().currentUser;
-      if (user != null) {
-        final history = await _aiHistoryService.getUserHistory(user.id);
-        setState(
-          () => _history = history.reversed.toList(),
-        ); // Mais recente primeiro
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar histórico: $e')),
-        );
-      }
-    }
-
-    setState(() => _loading = false);
+    _apiKey = dotenv.maybeGet('DEEPSEEK_API_KEY')?.trim();
+    _messages.add(
+      _ChatMessage(
+        author: _MessageAuthor.assistant,
+        content:
+            'Olá! Sou a $_helpyName, sua tutora virtual. Conte o que você precisa estudar '
+            'ou quais dificuldades enfrentou e eu preparo um plano de estudos personalizado.',
+      ),
+    );
   }
 
   Future<void> _sendMessage() async {
-    if (_messageController.text.isEmpty) return;
-
     final question = _messageController.text.trim();
+    if (question.isEmpty || _sendingMessage) return;
     _messageController.clear();
 
-    setState(() => _sendingMessage = true);
+    setState(() {
+      _messages.add(
+        _ChatMessage(author: _MessageAuthor.user, content: question),
+      );
+      _sendingMessage = true;
+    });
+    _scrollToBottom();
 
     try {
-      final user = AuthService().currentUser;
-      if (user == null) return;
+      final reply = await _fetchAssistantReply();
 
-      // Simular resposta da AI (em um app real, você faria uma chamada para uma API de AI)
-      final simulatedAnswer = _generateSimulatedResponse(question);
-
-      final aiHistory = AiHistory(
-        id: 0, // O ID será gerado pelo backend
-        userId: user.id,
-        question: question,
-        answer: simulatedAnswer,
-        createdAt: DateTime.now(),
-      );
-
-      await _aiHistoryService.addHistory(aiHistory);
-
-      // Adicionar à lista local
       setState(() {
-        _history.insert(0, aiHistory);
-      });
-
-      // Scroll para baixo
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
+        _messages.add(
+          _ChatMessage(author: _MessageAuthor.assistant, content: reply),
+        );
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao enviar mensagem: $e')));
+        ).showSnackBar(SnackBar(content: Text('Erro ao falar com a IA: $e')));
       }
     }
 
     setState(() => _sendingMessage = false);
+    _scrollToBottom();
   }
 
-  String _generateSimulatedResponse(String question) {
-    // Respostas simuladas baseadas na pergunta
-    final lowercaseQuestion = question.toLowerCase();
-
-    if (lowercaseQuestion.contains('olá') || lowercaseQuestion.contains('oi')) {
-      return 'Olá! Como posso ajudar você hoje?';
-    } else if (lowercaseQuestion.contains('estudar') ||
-        lowercaseQuestion.contains('estudo')) {
-      return 'Para estudar de forma eficaz, recomendo: 1) Criar um cronograma de estudos, 2) Fazer pausas regulares, 3) Usar técnicas como flashcards e mapas mentais, 4) Praticar exercícios regularmente.';
-    } else if (lowercaseQuestion.contains('flashcard')) {
-      return 'Flashcards são uma excelente ferramenta de estudo! Eles funcionam através da repetição espaçada, ajudando na memorização. Você pode criar flashcards na aba dedicada do app.';
-    } else if (lowercaseQuestion.contains('como') &&
-        lowercaseQuestion.contains('funciona')) {
-      return 'Este assistente pode ajudar com dúvidas sobre estudos, técnicas de aprendizado e organização. Faça perguntas específicas para obter respostas mais detalhadas!';
-    } else {
-      return 'Interessante pergunta! Embora eu seja um assistente simulado, posso ajudar com dicas de estudo e organização. Para respostas mais específicas sobre "$question", recomendo consultar fontes especializadas no assunto.';
+  Future<String> _fetchAssistantReply() async {
+    final apiKey = _apiKey ?? dotenv.maybeGet('DEEPSEEK_API_KEY')?.trim();
+    if (apiKey == null || apiKey.isEmpty) {
+      throw Exception(
+        'Configure a variável DEEPSEEK_API_KEY no .env e reinicie o app para usar a $_helpyName.',
+      );
     }
+
+    final response = await http.post(
+      Uri.parse('https://api.deepseek.com/v1/chat/completions'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $apiKey',
+      },
+      body: jsonEncode({
+        'model': 'deepseek-chat',
+        'messages': _buildChatPayload(),
+        'temperature': 0.7,
+        'top_p': 0.8,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final body = response.body.isEmpty
+          ? 'Sem detalhes adicionais.'
+          : response.body;
+      throw Exception('Falha (${response.statusCode}): $body');
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final choices = decoded['choices'] as List<dynamic>?;
+    if (choices == null || choices.isEmpty) {
+      throw Exception('Resposta inesperada da IA.');
+    }
+
+    final message = choices.first['message'] as Map<String, dynamic>?;
+    final content = message?['content'] as String?;
+    if (content == null || content.trim().isEmpty) {
+      throw Exception('A IA não retornou conteúdo.');
+    }
+
+    return content.trim();
+  }
+
+  List<Map<String, String>> _buildChatPayload() {
+    return [
+      {'role': 'system', 'content': _systemPrompt},
+      ..._messages.map(
+        (message) => {
+          'role': message.author == _MessageAuthor.user ? 'user' : 'assistant',
+          'content': message.content,
+        },
+      ),
+    ];
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = widget.isDarkMode;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final scaffoldColor = theme.scaffoldBackgroundColor;
 
-    return Scaffold(
-      appBar: AppTopNavBar(
-        title: 'Assistente AI',
-        isDarkMode: widget.isDarkMode,
-        onThemeToggle: widget.onThemeToggle,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _history.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            itemCount: _messages.length + (_sendingMessage ? 1 : 0),
+            itemBuilder: (context, index) {
+              final isTypingIndicator =
+                  _sendingMessage && index == _messages.length;
+              if (isTypingIndicator) {
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 16, right: 50),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF2D2A39)
+                          : const Color(0xFFE9E9ED),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Nenhuma conversa ainda',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isDark ? Colors.white70 : const Color(0xFF8B2CF5),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(width: 12),
                         Text(
-                          'Faça uma pergunta para começar!',
+                          '$_helpyName está pensando...',
                           style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
+                            color: isDark
+                                ? Colors.white.withOpacity(0.85)
+                                : Colors.black87,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _history.length,
-                    itemBuilder: (context, index) {
-                      final chat = _history[index];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Pergunta do usuário
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              margin: const EdgeInsets.only(
-                                bottom: 8,
-                                left: 50,
-                              ),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF8B2CF5),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                chat.question,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Resposta da AI
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              margin: const EdgeInsets.only(
-                                bottom: 16,
-                                right: 50,
-                              ),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.grey[800]
-                                    : Colors.grey[200],
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    chat.answer,
-                                    style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${chat.createdAt.hour}:${chat.createdAt.minute.toString().padLeft(2, '0')}',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
                   ),
-          ),
-          // Input de mensagem
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey[900] : Colors.white,
-              border: Border(
-                top: BorderSide(
-                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                );
+              }
+
+              final message = _messages[index];
+              final isUser = message.author == _MessageAuthor.user;
+              final bubbleColor = isUser
+                  ? const Color(0xFF8B2CF5)
+                  : (isDark
+                        ? const Color.fromARGB(255, 65, 61, 79)
+                        : const Color(0xFFE9E9ED));
+
+              return Align(
+                alignment: isUser
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Container(
+                  margin: EdgeInsets.only(
+                    bottom: 16,
+                    left: isUser ? 50 : 0,
+                    right: isUser ? 0 : 50,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bubbleColor,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: _buildFormattedMessage(message, isDark: isDark),
                 ),
+              );
+            },
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? scaffoldColor : Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withOpacity(0.06)
+                    : Colors.grey[300]!,
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Digite sua pergunta...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                    enabled: !_sendingMessage,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF8B2CF5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    onPressed: _sendingMessage ? null : _sendMessage,
-                    icon: _sendingMessage
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.send, color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(
+                    hintText: 'Digite sua pergunta para $_helpyName...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: isDark
+                        ? const Color(0xFF1E1B2A)
+                        : Colors.grey[100],
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                  enabled: !_sendingMessage,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF8B2CF5),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: _sendingMessage ? null : _sendMessage,
+                  icon: _sendingMessage
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -310,4 +313,52 @@ class _AssistantPageState extends State<AssistantPage> {
     _scrollController.dispose();
     super.dispose();
   }
+}
+
+enum _MessageAuthor { user, assistant }
+
+class _ChatMessage {
+  final _MessageAuthor author;
+  final String content;
+
+  const _ChatMessage({required this.author, required this.content});
+}
+
+Widget _buildFormattedMessage(_ChatMessage message, {required bool isDark}) {
+  final isUser = message.author == _MessageAuthor.user;
+  final baseColor = isUser
+      ? Colors.white
+      : (isDark ? Colors.white : Colors.black87);
+  final baseStyle = TextStyle(fontSize: 16, color: baseColor);
+
+  final pattern = RegExp(r'\*\*([^*]+)\*\*');
+  final spans = <TextSpan>[];
+  var currentIndex = 0;
+  final text = message.content;
+
+  for (final match in pattern.allMatches(text)) {
+    if (match.start > currentIndex) {
+      spans.add(TextSpan(text: text.substring(currentIndex, match.start)));
+    }
+    final boldText = match.group(1) ?? '';
+    spans.add(
+      TextSpan(
+        text: boldText,
+        style: baseStyle.copyWith(fontWeight: FontWeight.w600),
+      ),
+    );
+    currentIndex = match.end;
+  }
+
+  if (currentIndex < text.length) {
+    spans.add(TextSpan(text: text.substring(currentIndex)));
+  }
+
+  if (spans.isEmpty) {
+    spans.add(TextSpan(text: text));
+  }
+
+  return RichText(
+    text: TextSpan(style: baseStyle, children: spans),
+  );
 }
