@@ -1,13 +1,17 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, avoid_single_cascade_in_expression_statements
 
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:archive/archive.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:formatic/models/ai_history.dart';
 import 'package:formatic/services/ai_history_service.dart';
 import 'package:formatic/services/auth_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:xml/xml.dart';
 
 class AssistantPage extends StatefulWidget {
   final bool isDarkMode;
@@ -29,15 +33,18 @@ class _AssistantPageState extends State<AssistantPage> {
       'Você é Helpy, a tutora virtual da Formatic focada em apoiar estudantes. '
       'Forneça explicações claras, objetivas e em português, reforce técnicas de organização '
       'e proponha próximas etapas ou exercícios práticos sempre que possível.';
+  static const int _maxFileBytes = 5 * 1024 * 1024;
 
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _sendingMessage = false;
+  bool _processingUpload = false;
   String? _apiKey;
   bool _loading = true;
   List<_ConversationSession> _sessions = <_ConversationSession>[];
   _ConversationSession? _activeSession;
+  final List<_UploadedDocument> _pendingDocuments = <_UploadedDocument>[];
 
   final AiHistoryService _aiHistoryService = AiHistoryService();
   final AuthService _authService = AuthService();
@@ -100,6 +107,7 @@ class _AssistantPageState extends State<AssistantPage> {
         }
         _sessions = sessions;
         _loading = false;
+        _pendingDocuments.clear();
       });
       _scrollToBottom();
     }
@@ -109,7 +117,9 @@ class _AssistantPageState extends State<AssistantPage> {
     setState(() {
       _messages..clear();
       _sendingMessage = false;
+      _processingUpload = false;
       _activeSession = null;
+      _pendingDocuments.clear();
     });
     if (_messages.isEmpty) _messages.add(_welcomeMessage());
     _messageController.clear();
@@ -118,13 +128,57 @@ class _AssistantPageState extends State<AssistantPage> {
 
   Future<void> _sendMessage() async {
     final question = _messageController.text.trim();
-    if (question.isEmpty || _sendingMessage) return;
+    final hasAttachments = _pendingDocuments.isNotEmpty;
+    if ((question.isEmpty && !hasAttachments) ||
+        _sendingMessage ||
+        _processingUpload) {
+      return;
+    }
     _messageController.clear();
+
+    final effectivePrompt = question.isNotEmpty
+        ? question
+        : 'Analise os documentos anexados.';
+
+    final attachmentsSummary = hasAttachments
+        ? _pendingDocuments.map((doc) => doc.name).join(', ')
+        : null;
+
+    final aiContentBuffer = StringBuffer(effectivePrompt.trim());
+    if (hasAttachments) {
+      for (final doc in _pendingDocuments) {
+        aiContentBuffer
+          ..writeln('\n\n[Documento: ${doc.name}]')
+          ..writeln(doc.content);
+      }
+    }
+    final aiContent = aiContentBuffer.toString().trim();
+
+    String displayContent;
+    if (hasAttachments) {
+      final summaryLine = '📎 Documentos anexados: ${attachmentsSummary!}';
+      displayContent = question.isNotEmpty
+          ? '$question\n\n$summaryLine'
+          : summaryLine;
+    } else {
+      displayContent = question;
+    }
+
+    final historyQuestion = question.isNotEmpty
+        ? question
+        : (attachmentsSummary != null
+              ? 'Documentos anexados: $attachmentsSummary'
+              : effectivePrompt);
 
     setState(() {
       _messages.add(
-        _ChatMessage(author: _MessageAuthor.user, content: question),
+        _ChatMessage(
+          author: _MessageAuthor.user,
+          content: aiContent,
+          displayContent: displayContent.trim(),
+        ),
       );
+      _pendingDocuments.clear();
       _sendingMessage = true;
     });
     _scrollToBottom();
@@ -138,7 +192,7 @@ class _AssistantPageState extends State<AssistantPage> {
         );
       });
 
-      await _persistConversation(question: question);
+      await _persistConversation(question: historyQuestion);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -222,17 +276,26 @@ class _AssistantPageState extends State<AssistantPage> {
           _ChatMessage(author: _MessageAuthor.user, content: question),
     );
 
-    final fallbackTitle = firstUserMessage.content.trim().isNotEmpty
-        ? firstUserMessage.content.trim()
-        : question;
+    String fallbackTitleCandidate =
+        firstUserMessage.displayContent?.trim() ?? '';
+    final firstUserContent = firstUserMessage.content.trim();
+    if (fallbackTitleCandidate.isEmpty) {
+      if (firstUserContent.isNotEmpty) {
+        fallbackTitleCandidate = firstUserContent;
+      } else {
+        fallbackTitleCandidate = question;
+      }
+    }
+
+    final fallbackTitle = fallbackTitleCandidate.trim().isNotEmpty
+        ? fallbackTitleCandidate.trim()
+        : 'Conversa iniciada em ${_formatTimestamp(DateTime.now().toUtc())}';
 
     final resolvedTitle = (_activeSession?.title.trim().isNotEmpty ?? false)
         ? _activeSession!.title
-        : (fallbackTitle.isNotEmpty
-              ? fallbackTitle
-              : 'Conversa iniciada em ${_formatTimestamp(DateTime.now().toUtc())}');
+        : fallbackTitle;
 
-    final normalizedTitle = resolvedTitle.trim();
+    final normalizedTitle = _normalizeTitle(resolvedTitle);
 
     final serialized = _serializeMessages(conversation);
 
@@ -285,14 +348,21 @@ class _AssistantPageState extends State<AssistantPage> {
 
   String _serializeMessages(List<_ChatMessage> messages) {
     final serialized = messages
-        .map(
-          (message) => {
+        .map((message) {
+          final map = <String, String>{
             'role': message.author == _MessageAuthor.user
                 ? 'user'
                 : 'assistant',
             'content': message.content,
-          },
-        )
+          };
+          final display = message.displayContent;
+          if (display != null &&
+              display.trim().isNotEmpty &&
+              display.trim() != message.content.trim()) {
+            map['display_content'] = display.trim();
+          }
+          return map;
+        })
         .toList(growable: false);
     return jsonEncode(serialized);
   }
@@ -324,6 +394,174 @@ class _AssistantPageState extends State<AssistantPage> {
     }
   }
 
+  Future<void> _handleFileUpload() async {
+    if (_sendingMessage || _processingUpload) return;
+
+    setState(() => _processingUpload = true);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pdf', 'docx'],
+        withData: true,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        setState(() => _processingUpload = false);
+        return;
+      }
+
+      final file = result.files.single;
+      final extension = (file.extension ?? '').toLowerCase();
+      final name = file.name;
+
+      if (extension != 'pdf' && extension != 'docx') {
+        setState(() => _processingUpload = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Formato não suportado. Envie arquivos PDF ou DOCX.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      Uint8List? bytes = file.bytes;
+      if (bytes == null) {
+        setState(() => _processingUpload = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                kIsWeb
+                    ? 'Não foi possível ler o arquivo selecionado. Verifique as permissões do navegador e tente novamente.'
+                    : 'Não foi possível ler o arquivo selecionado. Tente novamente.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      if (bytes.length > _maxFileBytes) {
+        setState(() => _processingUpload = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Arquivo muito grande. Limite de 5MB.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final extracted = await _extractTextFromFile(bytes, extension: extension);
+      final cleaned = _cleanWhitespace(extracted);
+
+      if (cleaned.isEmpty) {
+        setState(() => _processingUpload = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Não consegui extrair texto do arquivo. Verifique se o documento não é apenas imagem.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      final limitedForAssistant = _limitText(cleaned, 12000);
+      setState(() {
+        _processingUpload = false;
+        _pendingDocuments.add(
+          _UploadedDocument(name: name, content: limitedForAssistant),
+        );
+      });
+
+      if (!mounted) return;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível processar o arquivo: $e')),
+        );
+      }
+      setState(() => _processingUpload = false);
+    }
+  }
+
+  void _removePendingDocument(_UploadedDocument doc) {
+    setState(() => _pendingDocuments.remove(doc));
+  }
+
+  Future<String> _extractTextFromFile(
+    Uint8List bytes, {
+    required String extension,
+  }) async {
+    if (extension == 'pdf') {
+      return _extractTextFromPdf(bytes);
+    }
+    if (extension == 'docx') {
+      return _extractTextFromDocx(bytes);
+    }
+    return '';
+  }
+
+  Future<String> _extractTextFromPdf(Uint8List bytes) async {
+    try {
+      final document = PdfDocument(inputBytes: bytes);
+      final extractor = PdfTextExtractor(document);
+      final buffer = StringBuffer();
+      for (var i = 0; i < document.pages.count; i++) {
+        buffer.write(extractor.extractText(startPageIndex: i, endPageIndex: i));
+        buffer.write('\n');
+      }
+      document.dispose();
+      return buffer.toString();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<String> _extractTextFromDocx(Uint8List bytes) async {
+    try {
+      final archive = ZipDecoder().decodeBytes(bytes, verify: false);
+      final documentEntry = archive.files.firstWhere(
+        (file) => file.name == 'word/document.xml',
+        orElse: () => ArchiveFile('empty', 0, const <int>[]),
+      );
+
+      if (documentEntry.size == 0) return '';
+
+      final xmlString = utf8.decode(documentEntry.content as List<int>);
+      final xmlDoc = XmlDocument.parse(xmlString);
+      final buffer = StringBuffer();
+
+      for (final node in xmlDoc.findAllElements('w:t')) {
+        buffer.write(node.text);
+        buffer.write(' ');
+      }
+
+      return buffer.toString();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _limitText(String text, int maxChars) {
+    if (text.length <= maxChars) return text;
+    return text.substring(0, maxChars);
+  }
+
+  String _cleanWhitespace(String text) {
+    return text.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
   Future<void> _deleteSession(_ConversationSession session) async {
     final user = _authService.currentUser;
     if (user == null) return;
@@ -350,10 +588,14 @@ class _AssistantPageState extends State<AssistantPage> {
             ..add(_welcomeMessage());
           _sendingMessage = false;
           _messageController.clear();
+          _pendingDocuments.clear();
         }
       });
 
       if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Conversa removida.')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -454,6 +696,7 @@ class _AssistantPageState extends State<AssistantPage> {
                             : session.messages,
                       );
                     _sendingMessage = false;
+                    _pendingDocuments.clear();
                   });
                   _messageController.clear();
                   _scrollToBottom();
@@ -475,6 +718,20 @@ class _AssistantPageState extends State<AssistantPage> {
     final hour = local.hour.toString().padLeft(2, '0');
     final minute = local.minute.toString().padLeft(2, '0');
     return '$day/$month $hour:$minute';
+  }
+
+  String _normalizeTitle(String value, {int maxLength = 140}) {
+    final sanitized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (sanitized.isEmpty || sanitized.length <= maxLength) {
+      return sanitized;
+    }
+    final safeLength = maxLength > 3 ? maxLength - 3 : maxLength;
+    final int endIndex = safeLength.clamp(0, sanitized.length);
+    final truncated = sanitized.substring(0, endIndex).trimRight();
+    if (maxLength <= 3 || endIndex >= sanitized.length) {
+      return truncated;
+    }
+    return '$truncated...';
   }
 
   @override
@@ -585,81 +842,124 @@ class _AssistantPageState extends State<AssistantPage> {
               ),
             ),
           ),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    hintText: 'Digite sua pergunta para $_helpyName...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: isDark
-                        ? const Color(0xFF1E1B2A)
-                        : Colors.grey[100],
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    hintStyle: TextStyle(
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                  onSubmitted: (_) => _sendMessage(),
-                  enabled: !_sendingMessage,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF8B2CF5),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: _sendingMessage ? null : _sendMessage,
-                  icon: _sendingMessage
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+              if (_pendingDocuments.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _pendingDocuments
+                        .map(
+                          (doc) => InputChip(
+                            label: Text(doc.name),
+                            avatar: const Icon(
+                              Icons.insert_drive_file,
+                              size: 18,
+                            ),
+                            onDeleted: () => _removePendingDocument(doc),
                           ),
                         )
-                      : const Icon(Icons.send, color: Colors.white),
-                ),
-              ),
-              const SizedBox(width: 8),
-              PopupMenuButton<_AssistantMenuAction>(
-                onSelected: _handleMenuSelection,
-                tooltip: 'Mais opções',
-                itemBuilder: (context) => const [
-                  PopupMenuItem<_AssistantMenuAction>(
-                    value: _AssistantMenuAction.newConversation,
-                    child: Text('Nova conversa'),
+                        .toList(),
                   ),
-                  PopupMenuItem<_AssistantMenuAction>(
-                    value: _AssistantMenuAction.history,
-                    child: Text('Histórico de conversas'),
+                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: 'Digite sua pergunta para $_helpyName...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0xFF1E1B2A)
+                            : Colors.grey[100],
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        hintStyle: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                      onSubmitted: (_) => _sendMessage(),
+                      enabled: !_sendingMessage && !_processingUpload,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: 'Enviar arquivo',
+                    onPressed: (_sendingMessage || _processingUpload)
+                        ? null
+                        : _handleFileUpload,
+                    icon: Icon(
+                      Icons.attach_file,
+                      color: (_sendingMessage || _processingUpload)
+                          ? Colors.grey
+                          : (isDark ? Colors.white : Colors.black87),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF8B2CF5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: (_sendingMessage || _processingUpload)
+                          ? null
+                          : _sendMessage,
+                      icon: _sendingMessage
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.send, color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  PopupMenuButton<_AssistantMenuAction>(
+                    onSelected: _handleMenuSelection,
+                    tooltip: 'Mais opções',
+                    itemBuilder: (context) => const [
+                      PopupMenuItem<_AssistantMenuAction>(
+                        value: _AssistantMenuAction.newConversation,
+                        child: Text('Nova conversa'),
+                      ),
+                      PopupMenuItem<_AssistantMenuAction>(
+                        value: _AssistantMenuAction.history,
+                        child: Text('Histórico de conversas'),
+                      ),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E1B2A)
+                            : Colors.grey[200],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.more_vert,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
                   ),
                 ],
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1B2A) : Colors.grey[200],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.more_vert,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
               ),
             ],
           ),
@@ -681,8 +981,22 @@ enum _MessageAuthor { user, assistant }
 class _ChatMessage {
   final _MessageAuthor author;
   final String content;
+  final String? displayContent;
 
-  const _ChatMessage({required this.author, required this.content});
+  const _ChatMessage({
+    required this.author,
+    required this.content,
+    this.displayContent,
+  });
+
+  String get uiContent => displayContent ?? content;
+}
+
+class _UploadedDocument {
+  final String name;
+  final String content;
+
+  const _UploadedDocument({required this.name, required this.content});
 }
 
 class _ConversationSession {
@@ -702,13 +1016,13 @@ class _ConversationSession {
     final buffer = StringBuffer();
     for (final message in messages) {
       if (message.author == _MessageAuthor.assistant) {
-        buffer.write(message.content);
+        buffer.write(message.uiContent);
         break;
       }
     }
     if (buffer.isEmpty) {
       return messages.isNotEmpty
-          ? messages.first.content
+          ? messages.first.uiContent
           : 'Conversa sem mensagens registradas.';
     }
     return buffer.toString();
@@ -728,17 +1042,18 @@ class _ConversationSession {
     try {
       final decoded = jsonDecode(entry.answer);
       if (decoded is List) {
-        parsed = decoded
-            .whereType<Map<String, dynamic>>()
-            .map(
-              (map) => _ChatMessage(
-                author: map['role'] == 'user'
-                    ? _MessageAuthor.user
-                    : _MessageAuthor.assistant,
-                content: (map['content'] as String?)?.trim() ?? '',
-              ),
-            )
-            .toList();
+        parsed = decoded.whereType<Map<String, dynamic>>().map((map) {
+          final displayRaw = (map['display_content'] as String?)?.trim();
+          return _ChatMessage(
+            author: map['role'] == 'user'
+                ? _MessageAuthor.user
+                : _MessageAuthor.assistant,
+            content: (map['content'] as String?)?.trim() ?? '',
+            displayContent: displayRaw == null || displayRaw.isEmpty
+                ? null
+                : displayRaw,
+          );
+        }).toList();
       } else {
         throw const FormatException('Formato inválido');
       }
@@ -797,7 +1112,7 @@ Widget _buildFormattedMessage(_ChatMessage message, {required bool isDark}) {
   final pattern = RegExp(r'\*\*([^*]+)\*\*');
   final spans = <TextSpan>[];
   var currentIndex = 0;
-  final text = message.content;
+  final text = message.uiContent;
 
   for (final match in pattern.allMatches(text)) {
     if (match.start > currentIndex) {

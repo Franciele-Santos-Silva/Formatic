@@ -42,6 +42,10 @@ dependencies:
   syncfusion_flutter_pdfviewer: ^28.1.33
   path_provider: ^2.1.1
   url_launcher: ^6.2.1
+  file_picker: ^6.1.1
+  syncfusion_flutter_pdf: ^28.1.33
+  archive: ^3.4.13
+  xml: ^6.5.0
 
   # Desktop-only helper for setting the native window size on desktop platforms.
   # Moved here under dependencies (not under the `flutter:` section).
