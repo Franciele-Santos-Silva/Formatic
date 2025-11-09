@@ -4,6 +4,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:formatic/models/ai_history.dart';
+import 'package:formatic/services/ai_history_service.dart';
+import 'package:formatic/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class AssistantPage extends StatefulWidget {
@@ -32,19 +35,85 @@ class _AssistantPageState extends State<AssistantPage> {
   final ScrollController _scrollController = ScrollController();
   bool _sendingMessage = false;
   String? _apiKey;
+  bool _loading = true;
+  List<_ConversationSession> _sessions = <_ConversationSession>[];
+  _ConversationSession? _activeSession;
+
+  final AiHistoryService _aiHistoryService = AiHistoryService();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     _apiKey = dotenv.maybeGet('DEEPSEEK_API_KEY')?.trim();
-    _messages.add(
-      _ChatMessage(
-        author: _MessageAuthor.assistant,
-        content:
-            'Olá! Sou a $_helpyName, sua tutora virtual. Conte o que você precisa estudar '
-            'ou quais dificuldades enfrentou e eu preparo um plano de estudos personalizado.',
-      ),
-    );
+    _loadHistory();
+  }
+
+  static const _welcomeText =
+      'Olá! Sou a $_helpyName, sua tutora virtual. Conte o que você precisa estudar '
+      'ou quais dificuldades enfrentou e eu preparo um plano de estudos personalizado.';
+
+  _ChatMessage _welcomeMessage() => const _ChatMessage(
+    author: _MessageAuthor.assistant,
+    content: _welcomeText,
+  );
+
+  Future<void> _loadHistory() async {
+    setState(() => _loading = true);
+
+    final List<_ConversationSession> sessions = <_ConversationSession>[];
+
+    try {
+      final user = _authService.currentUser;
+      if (user != null) {
+        final history = await _aiHistoryService.getUserHistory(user.id);
+        for (final entry in history) {
+          final session = _ConversationSession.fromHistory(entry);
+          sessions.add(session);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível carregar o histórico: $e')),
+        );
+      }
+    } finally {
+      // ignore: control_flow_in_finally
+      if (!mounted) return;
+      setState(() {
+        if (sessions.isEmpty) {
+          _messages
+            ..clear()
+            ..add(_welcomeMessage());
+          _activeSession = null;
+        } else {
+          sessions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _activeSession = sessions.first;
+          _messages
+            ..clear()
+            ..addAll(
+              _activeSession!.messages.isEmpty
+                  ? <_ChatMessage>[_welcomeMessage()]
+                  : _activeSession!.messages,
+            );
+        }
+        _sessions = sessions;
+        _loading = false;
+      });
+      _scrollToBottom();
+    }
+  }
+
+  void _startNewConversation() {
+    setState(() {
+      _messages..clear();
+      _sendingMessage = false;
+      _activeSession = null;
+    });
+    if (_messages.isEmpty) _messages.add(_welcomeMessage());
+    _messageController.clear();
+    _scrollToBottom();
   }
 
   Future<void> _sendMessage() async {
@@ -68,6 +137,8 @@ class _AssistantPageState extends State<AssistantPage> {
           _ChatMessage(author: _MessageAuthor.assistant, content: reply),
         );
       });
+
+      await _persistConversation(question: question);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -136,6 +207,100 @@ class _AssistantPageState extends State<AssistantPage> {
     ];
   }
 
+  Future<void> _persistConversation({required String question}) async {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    final conversation = _messages
+        .where((message) => !_isWelcomeMessage(message))
+        .toList(growable: false);
+    if (conversation.isEmpty) return;
+
+    final firstUserMessage = conversation.firstWhere(
+      (message) => message.author == _MessageAuthor.user,
+      orElse: () =>
+          _ChatMessage(author: _MessageAuthor.user, content: question),
+    );
+
+    final fallbackTitle = firstUserMessage.content.trim().isNotEmpty
+        ? firstUserMessage.content.trim()
+        : question;
+
+    final resolvedTitle = (_activeSession?.title.trim().isNotEmpty ?? false)
+        ? _activeSession!.title
+        : (fallbackTitle.isNotEmpty
+              ? fallbackTitle
+              : 'Conversa iniciada em ${_formatTimestamp(DateTime.now().toUtc())}');
+
+    final normalizedTitle = resolvedTitle.trim();
+
+    final serialized = _serializeMessages(conversation);
+
+    if (_activeSession == null) {
+      final response = await _aiHistoryService.client
+          .from('ai_history')
+          .insert({
+            'user_id': user.id,
+            'question': normalizedTitle,
+            'answer': serialized,
+          })
+          .select()
+          .limit(1);
+
+      if (response.isEmpty) return;
+
+      final Map<String, dynamic> data = response.first;
+      final createdAt = DateTime.parse(data['created_at'] as String);
+      final newSession = _ConversationSession(
+        id: data['id'] as int,
+        title: normalizedTitle,
+        createdAt: createdAt,
+        messages: conversation,
+      );
+
+      setState(() {
+        _activeSession = newSession;
+        _sessions = <_ConversationSession>[newSession, ..._sessions];
+      });
+    } else {
+      await _aiHistoryService.client
+          .from('ai_history')
+          .update({'question': normalizedTitle, 'answer': serialized})
+          .eq('id', _activeSession!.id);
+
+      final updatedSession = _activeSession!.copyWith(
+        title: normalizedTitle,
+        messages: conversation,
+      );
+
+      setState(() {
+        _activeSession = updatedSession;
+        _sessions = <_ConversationSession>[
+          updatedSession,
+          ..._sessions.where((s) => s.id != updatedSession.id),
+        ];
+      });
+    }
+  }
+
+  String _serializeMessages(List<_ChatMessage> messages) {
+    final serialized = messages
+        .map(
+          (message) => {
+            'role': message.author == _MessageAuthor.user
+                ? 'user'
+                : 'assistant',
+            'content': message.content,
+          },
+        )
+        .toList(growable: false);
+    return jsonEncode(serialized);
+  }
+
+  bool _isWelcomeMessage(_ChatMessage message) =>
+      message.author == _MessageAuthor.assistant &&
+      message.content == _welcomeText;
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -148,6 +313,170 @@ class _AssistantPageState extends State<AssistantPage> {
     });
   }
 
+  void _handleMenuSelection(_AssistantMenuAction action) {
+    switch (action) {
+      case _AssistantMenuAction.newConversation:
+        _startNewConversation();
+        break;
+      case _AssistantMenuAction.history:
+        _showHistorySheet();
+        break;
+    }
+  }
+
+  Future<void> _deleteSession(_ConversationSession session) async {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    try {
+      await _aiHistoryService.client
+          .from('ai_history')
+          .delete()
+          .eq('id', session.id)
+          .eq('user_id', user.id);
+
+      if (!mounted) return;
+
+      final updatedSessions = _sessions
+          .where((existing) => existing.id != session.id)
+          .toList();
+
+      setState(() {
+        _sessions = updatedSessions;
+        if (_activeSession?.id == session.id) {
+          _activeSession = null;
+          _messages
+            ..clear()
+            ..add(_welcomeMessage());
+          _sendingMessage = false;
+          _messageController.clear();
+        }
+      });
+
+      if (!mounted) return;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível excluir a conversa: $e')),
+      );
+    }
+  }
+
+  void _showHistorySheet() {
+    if (!_mountedWithContext()) return;
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (modalContext) {
+        if (_sessions.isEmpty) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.history_rounded, size: 32, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Nenhuma conversa salva ainda.',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Envie uma mensagem para a Helpy e o histórico aparecerá aqui!',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            itemCount: _sessions.length,
+            separatorBuilder: (_, __) => const Divider(height: 20),
+            itemBuilder: (context, index) {
+              final session = _sessions[index];
+              return ListTile(
+                leading: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.12),
+                  child: Icon(
+                    Icons.chat_bubble_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                title: Text(
+                  session.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    session.preview,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatTimestamp(session.createdAt),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    IconButton(
+                      tooltip: 'Excluir conversa',
+                      icon: const Icon(Icons.delete_outline),
+                      color: Theme.of(context).colorScheme.error,
+                      onPressed: () => _deleteSession(session),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    _activeSession = session;
+                    _messages
+                      ..clear()
+                      ..addAll(
+                        session.messages.isEmpty
+                            ? <_ChatMessage>[_welcomeMessage()]
+                            : session.messages,
+                      );
+                    _sendingMessage = false;
+                  });
+                  _messageController.clear();
+                  _scrollToBottom();
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  bool _mountedWithContext() => mounted && context.mounted;
+
+  String _formatTimestamp(DateTime timestamp) {
+    final local = timestamp.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month $hour:$minute';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -157,88 +486,92 @@ class _AssistantPageState extends State<AssistantPage> {
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-            itemCount: _messages.length + (_sendingMessage ? 1 : 0),
-            itemBuilder: (context, index) {
-              final isTypingIndicator =
-                  _sendingMessage && index == _messages.length;
-              if (isTypingIndicator) {
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 16, right: 50),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF2D2A39)
-                          : const Color(0xFFE9E9ED),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isDark ? Colors.white70 : const Color(0xFF8B2CF5),
-                            ),
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                  itemCount: _messages.length + (_sendingMessage ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    final isTypingIndicator =
+                        _sendingMessage && index == _messages.length;
+                    if (isTypingIndicator) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 16, right: 50),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '$_helpyName está pensando...',
-                          style: TextStyle(
+                          decoration: BoxDecoration(
                             color: isDark
-                                ? Colors.white.withOpacity(0.85)
-                                : Colors.black87,
-                            fontWeight: FontWeight.w500,
+                                ? const Color(0xFF2D2A39)
+                                : const Color(0xFFE9E9ED),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    isDark
+                                        ? Colors.white70
+                                        : const Color(0xFF8B2CF5),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '$_helpyName está pensando...',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.85)
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              }
+                      );
+                    }
 
-              final message = _messages[index];
-              final isUser = message.author == _MessageAuthor.user;
-              final bubbleColor = isUser
-                  ? const Color(0xFF8B2CF5)
-                  : (isDark
-                        ? const Color.fromARGB(255, 65, 61, 79)
-                        : const Color(0xFFE9E9ED));
+                    final message = _messages[index];
+                    final isUser = message.author == _MessageAuthor.user;
+                    final bubbleColor = isUser
+                        ? const Color(0xFF8B2CF5)
+                        : (isDark
+                              ? const Color.fromARGB(255, 65, 61, 79)
+                              : const Color(0xFFE9E9ED));
 
-              return Align(
-                alignment: isUser
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
-                child: Container(
-                  margin: EdgeInsets.only(
-                    bottom: 16,
-                    left: isUser ? 50 : 0,
-                    right: isUser ? 0 : 50,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: bubbleColor,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: _buildFormattedMessage(message, isDark: isDark),
+                    return Align(
+                      alignment: isUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        margin: EdgeInsets.only(
+                          bottom: 16,
+                          left: isUser ? 50 : 0,
+                          right: isUser ? 0 : 50,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: bubbleColor,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: _buildFormattedMessage(message, isDark: isDark),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
         Container(
           padding: const EdgeInsets.all(16),
@@ -302,6 +635,32 @@ class _AssistantPageState extends State<AssistantPage> {
                       : const Icon(Icons.send, color: Colors.white),
                 ),
               ),
+              const SizedBox(width: 8),
+              PopupMenuButton<_AssistantMenuAction>(
+                onSelected: _handleMenuSelection,
+                tooltip: 'Mais opções',
+                itemBuilder: (context) => const [
+                  PopupMenuItem<_AssistantMenuAction>(
+                    value: _AssistantMenuAction.newConversation,
+                    child: Text('Nova conversa'),
+                  ),
+                  PopupMenuItem<_AssistantMenuAction>(
+                    value: _AssistantMenuAction.history,
+                    child: Text('Histórico de conversas'),
+                  ),
+                ],
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1B2A) : Colors.grey[200],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.more_vert,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -325,6 +684,108 @@ class _ChatMessage {
 
   const _ChatMessage({required this.author, required this.content});
 }
+
+class _ConversationSession {
+  final int id;
+  final String title;
+  final DateTime createdAt;
+  final List<_ChatMessage> messages;
+
+  const _ConversationSession({
+    required this.id,
+    required this.title,
+    required this.createdAt,
+    required this.messages,
+  });
+
+  String get preview {
+    final buffer = StringBuffer();
+    for (final message in messages) {
+      if (message.author == _MessageAuthor.assistant) {
+        buffer.write(message.content);
+        break;
+      }
+    }
+    if (buffer.isEmpty) {
+      return messages.isNotEmpty
+          ? messages.first.content
+          : 'Conversa sem mensagens registradas.';
+    }
+    return buffer.toString();
+  }
+
+  _ConversationSession copyWith({String? title, List<_ChatMessage>? messages}) {
+    return _ConversationSession(
+      id: id,
+      title: title ?? this.title,
+      createdAt: createdAt,
+      messages: messages ?? this.messages,
+    );
+  }
+
+  factory _ConversationSession.fromHistory(AiHistory entry) {
+    List<_ChatMessage> parsed;
+    try {
+      final decoded = jsonDecode(entry.answer);
+      if (decoded is List) {
+        parsed = decoded
+            .whereType<Map<String, dynamic>>()
+            .map(
+              (map) => _ChatMessage(
+                author: map['role'] == 'user'
+                    ? _MessageAuthor.user
+                    : _MessageAuthor.assistant,
+                content: (map['content'] as String?)?.trim() ?? '',
+              ),
+            )
+            .toList();
+      } else {
+        throw const FormatException('Formato inválido');
+      }
+    } catch (_) {
+      parsed = <_ChatMessage>[
+        if (entry.question.trim().isNotEmpty)
+          _ChatMessage(author: _MessageAuthor.user, content: entry.question),
+        if (entry.answer.trim().isNotEmpty)
+          _ChatMessage(author: _MessageAuthor.assistant, content: entry.answer),
+      ];
+    }
+
+    final title = _resolveTitle(entry.question, parsed, entry.createdAt);
+
+    return _ConversationSession(
+      id: entry.id,
+      title: title,
+      createdAt: entry.createdAt,
+      messages: parsed,
+    );
+  }
+
+  static String _resolveTitle(
+    String fallback,
+    List<_ChatMessage> messages,
+    DateTime createdAt,
+  ) {
+    final firstUser = messages.firstWhere(
+      (message) => message.author == _MessageAuthor.user,
+      orElse: () =>
+          _ChatMessage(author: _MessageAuthor.user, content: fallback.trim()),
+    );
+
+    if (firstUser.content.trim().isNotEmpty) {
+      return firstUser.content.trim();
+    }
+
+    final formattedDate =
+        '${createdAt.day.toString().padLeft(2, '0')}/'
+        '${createdAt.month.toString().padLeft(2, '0')} '
+        '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
+
+    return 'Conversa de $formattedDate';
+  }
+}
+
+enum _AssistantMenuAction { newConversation, history }
 
 Widget _buildFormattedMessage(_ChatMessage message, {required bool isDark}) {
   final isUser = message.author == _MessageAuthor.user;
