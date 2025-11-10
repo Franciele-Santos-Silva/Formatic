@@ -30,7 +30,7 @@ class FlashcardService {
         .from('flashcards')
         .delete()
         .eq('id', flashcardId);
-  }
+  } 
 }
 
 
