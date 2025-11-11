@@ -1,6 +1,7 @@
-// ignore_for_file: deprecated_member_use, avoid_single_cascade_in_expression_statements
+// ignore_for_file: deprecated_member_use, avoid_single_cascade_in_expression_statements, use_build_context_synchronously
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:archive/archive.dart';
@@ -33,6 +34,7 @@ class _AssistantPageState extends State<AssistantPage> {
       'Forneça explicações claras, objetivas e em português, reforce técnicas de organização '
       'e proponha próximas etapas ou exercícios práticos sempre que possível.';
   static const int _maxFileBytes = 5 * 1024 * 1024;
+  static const int _maxContextMessages = 14;
 
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _messageController = TextEditingController();
@@ -81,7 +83,10 @@ class _AssistantPageState extends State<AssistantPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível carregar o histórico: $e')),
+          SnackBar(
+            content: Text('Não foi possível carregar o histórico: $e'),
+            duration: const Duration(milliseconds: 1000),
+          ),
         );
       }
     } finally {
@@ -194,9 +199,12 @@ class _AssistantPageState extends State<AssistantPage> {
       await _persistConversation(question: historyQuestion);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao falar com a IA: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao falar com a IA: $e'),
+            duration: const Duration(milliseconds: 1000),
+          ),
+        );
       }
     }
 
@@ -249,9 +257,13 @@ class _AssistantPageState extends State<AssistantPage> {
   }
 
   List<Map<String, String>> _buildChatPayload() {
+    final recentMessages = _messages.length <= _maxContextMessages
+        ? _messages
+        : _messages.sublist(_messages.length - _maxContextMessages);
+
     return [
       {'role': 'system', 'content': _systemPrompt},
-      ..._messages.map(
+      ...recentMessages.map(
         (message) => {
           'role': message.author == _MessageAuthor.user ? 'user' : 'assistant',
           'content': message.content,
@@ -423,6 +435,7 @@ class _AssistantPageState extends State<AssistantPage> {
               content: Text(
                 'Formato não suportado. Envie arquivos PDF ou DOCX.',
               ),
+              duration: Duration(milliseconds: 1000),
             ),
           );
         }
@@ -440,6 +453,7 @@ class _AssistantPageState extends State<AssistantPage> {
                     ? 'Não foi possível ler o arquivo selecionado. Verifique as permissões do navegador e tente novamente.'
                     : 'Não foi possível ler o arquivo selecionado. Tente novamente.',
               ),
+              duration: const Duration(milliseconds: 1000),
             ),
           );
         }
@@ -452,6 +466,7 @@ class _AssistantPageState extends State<AssistantPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Arquivo muito grande. Limite de 5MB.'),
+              duration: Duration(milliseconds: 1000),
             ),
           );
         }
@@ -469,13 +484,14 @@ class _AssistantPageState extends State<AssistantPage> {
               content: Text(
                 'Não consegui extrair texto do arquivo. Verifique se o documento não é apenas imagem.',
               ),
+              duration: Duration(milliseconds: 1000),
             ),
           );
         }
         return;
       }
 
-      final limitedForAssistant = _limitText(cleaned, 12000);
+      final limitedForAssistant = _limitText(cleaned, 8000);
       setState(() {
         _processingUpload = false;
         _pendingDocuments.add(
@@ -487,7 +503,10 @@ class _AssistantPageState extends State<AssistantPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível processar o arquivo: $e')),
+          SnackBar(
+            content: Text('Não foi possível processar o arquivo: $e'),
+            duration: const Duration(milliseconds: 1000),
+          ),
         );
       }
       setState(() => _processingUpload = false);
@@ -592,13 +611,19 @@ class _AssistantPageState extends State<AssistantPage> {
       });
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Conversa removida.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Conversa removida.'),
+          duration: Duration(milliseconds: 1000),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível excluir a conversa: $e')),
+        SnackBar(
+          content: Text('Não foi possível excluir a conversa: $e'),
+          duration: const Duration(milliseconds: 1000),
+        ),
       );
     }
   }
@@ -733,6 +758,144 @@ class _AssistantPageState extends State<AssistantPage> {
     return '$truncated...';
   }
 
+  void _copyMessage(_ChatMessage message) {
+    final text = message.uiContent.trim();
+    if (text.isEmpty || !_mountedWithContext()) return;
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Mensagem copiada.'),
+        duration: Duration(milliseconds: 1000),
+      ),
+    );
+  }
+
+  Future<void> _editMessage(int index) async {
+    if (index < 0 || index >= _messages.length) return;
+    if (_sendingMessage || _processingUpload || !_mountedWithContext()) return;
+
+    final message = _messages[index];
+    if (message.author != _MessageAuthor.user) return;
+
+    final docMarker = '\n\n[Documento:';
+    final docIndex = message.content.indexOf(docMarker);
+    final hasAttachments = docIndex != -1;
+    final attachmentsSection = hasAttachments
+        ? message.content.substring(docIndex)
+        : '';
+    final basePrompt = hasAttachments
+        ? message.content.substring(0, docIndex).trim()
+        : message.content.trim();
+
+    final controller = TextEditingController(text: basePrompt);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Editar mensagem'),
+        content: TextField(
+          controller: controller,
+          maxLines: null,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Atualize a mensagem selecionada',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+
+    controller.dispose();
+
+    if (result == null) return;
+    final updatedPrompt = result.trim();
+
+    if (updatedPrompt.isEmpty && !hasAttachments) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('A mensagem não pode ficar vazia.'),
+          duration: Duration(milliseconds: 1000),
+        ),
+      );
+      return;
+    }
+
+    final promptForContent = updatedPrompt.isNotEmpty
+        ? updatedPrompt
+        : (hasAttachments ? 'Analise os documentos anexados.' : '');
+
+    final newContent = hasAttachments
+        ? '$promptForContent$attachmentsSection'
+        : promptForContent;
+
+    String? newDisplay;
+    if (hasAttachments) {
+      final summary = _buildAttachmentSummaryFromContent(
+        attachmentsSection,
+      )?.trim();
+      if (summary != null && summary.isNotEmpty) {
+        newDisplay = promptForContent.isNotEmpty
+            ? '$promptForContent\n\n$summary'
+            : summary;
+      } else {
+        newDisplay = promptForContent.isNotEmpty ? promptForContent : null;
+      }
+    }
+
+    final sanitizedContent = newContent.trim();
+    final sanitizedDisplay = (newDisplay?.trim().isNotEmpty ?? false)
+        ? newDisplay!.trim()
+        : null;
+
+    final updatedMessage = _ChatMessage(
+      author: _MessageAuthor.user,
+      content: sanitizedContent,
+      displayContent: sanitizedDisplay,
+    );
+
+    setState(() => _messages[index] = updatedMessage);
+
+    final persistReference = promptForContent.isNotEmpty
+        ? promptForContent
+        : (sanitizedDisplay ?? '');
+
+    if (persistReference.isNotEmpty) {
+      await _persistConversation(question: persistReference);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Mensagem atualizada.'),
+        duration: Duration(milliseconds: 1000),
+      ),
+    );
+  }
+
+  String? _buildAttachmentSummaryFromContent(String attachmentSection) {
+    final names = _attachmentNamesFromContent(attachmentSection);
+    if (names.isEmpty) return null;
+    return '📎 Documentos anexados: ${names.join(', ')}';
+  }
+
+  List<String> _attachmentNamesFromContent(String attachmentSection) {
+    final regex = RegExp(r'\[Documento: ([^\]]+)\]');
+    return regex
+        .allMatches(attachmentSection)
+        .map((match) => match.group(1)?.trim())
+        .whereType<String>()
+        .where((name) => name.isNotEmpty)
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -809,21 +972,31 @@ class _AssistantPageState extends State<AssistantPage> {
                       alignment: isUser
                           ? Alignment.centerRight
                           : Alignment.centerLeft,
-                      child: Container(
-                        margin: EdgeInsets.only(
-                          bottom: 16,
-                          left: isUser ? 50 : 0,
-                          right: isUser ? 0 : 50,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _copyMessage(message),
+                        onLongPress: message.author == _MessageAuthor.user
+                            ? () => _editMessage(index)
+                            : null,
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            bottom: 16,
+                            left: isUser ? 50 : 0,
+                            right: isUser ? 0 : 50,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: bubbleColor,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: _buildFormattedMessage(
+                            message,
+                            isDark: isDark,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: bubbleColor,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: _buildFormattedMessage(message, isDark: isDark),
                       ),
                     );
                   },

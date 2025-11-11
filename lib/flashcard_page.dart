@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:formatic/services/auth_service.dart';
 import 'package:formatic/services/flashcard_service.dart';
 import 'package:formatic/models/flashcard.dart';
-// Removed login_page import (logout tratado no AppTopNavBar)
 
 class FlashcardPage extends StatefulWidget {
   final bool isDarkMode;
@@ -23,8 +22,9 @@ class FlashcardPage extends StatefulWidget {
 class _FlashcardPageState extends State<FlashcardPage>
     with SingleTickerProviderStateMixin {
   final FlashcardService _flashcardService = FlashcardService();
-  // Paleta principal (roxo) - tom único consistente
   static const Color primaryColor = Color(0xFF8B2CF5);
+  static const Color darkBackground = Color(0xFF232B36);
+  static const Color darkBackgroundDim = Color(0xFF1B252E);
   List<Flashcard> _flashcards = [];
   String _searchQuery = '';
   bool _loading = true;
@@ -115,10 +115,6 @@ class _FlashcardPageState extends State<FlashcardPage>
       _answerController.clear();
 
       await _loadFlashcards();
-
-      if (mounted) {
-        _showSnackBar('Flashcard adicionado com sucesso!');
-      }
     } catch (e) {
       if (mounted) {
         _showSnackBar('Erro ao adicionar flashcard: $e', isError: true);
@@ -173,7 +169,7 @@ class _FlashcardPageState extends State<FlashcardPage>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [Colors.grey[850]!, Colors.grey[900]!]
+                  ? const [darkBackground, darkBackgroundDim]
                   : [Colors.white, Colors.grey[50]!],
             ),
             borderRadius: BorderRadius.circular(24),
@@ -416,7 +412,7 @@ class _FlashcardPageState extends State<FlashcardPage>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [Colors.grey[850]!, Colors.grey[900]!]
+                  ? const [darkBackground, darkBackgroundDim]
                   : [Colors.white, Colors.grey[50]!],
             ),
             borderRadius: BorderRadius.circular(24),
@@ -666,7 +662,7 @@ class _FlashcardPageState extends State<FlashcardPage>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [Colors.grey[850]!, Colors.grey[900]!]
+                  ? const [darkBackground, darkBackgroundDim]
                   : [Colors.white, Colors.grey[50]!],
             ),
             borderRadius: BorderRadius.circular(24),
@@ -901,7 +897,7 @@ class _FlashcardPageState extends State<FlashcardPage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: _isDarkTheme
-              ? [Colors.grey[900]!, Colors.grey[850]!]
+              ? const [darkBackground, darkBackgroundDim]
               : [Colors.grey[50]!, Colors.white],
         ),
       ),
@@ -912,7 +908,7 @@ class _FlashcardPageState extends State<FlashcardPage>
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             decoration: BoxDecoration(
               color: _isDarkTheme
-                  ? Colors.grey[850]!.withOpacity(0.5)
+                  ? darkBackground.withOpacity(0.6)
                   : Colors.white.withOpacity(0.9),
               boxShadow: [
                 BoxShadow(
@@ -1128,7 +1124,7 @@ class _FlashcardPageState extends State<FlashcardPage>
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: _isDarkTheme
-                  ? Colors.grey[850]!.withOpacity(0.5)
+                  ? darkBackground.withOpacity(0.6)
                   : Colors.white.withOpacity(0.9),
               boxShadow: [
                 BoxShadow(
@@ -1217,7 +1213,7 @@ class _FlashcardPageState extends State<FlashcardPage>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: _isDarkTheme
-              ? [Colors.grey[900]!, Colors.grey[850]!]
+              ? const [darkBackground, darkBackgroundDim]
               : [Colors.grey[50]!, Colors.white],
         ),
       ),
@@ -1311,7 +1307,7 @@ class _FlashcardPageState extends State<FlashcardPage>
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: _isDarkTheme
-                      ? Colors.grey[850]!.withOpacity(0.5)
+                      ? darkBackground.withOpacity(0.6)
                       : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
@@ -1409,7 +1405,7 @@ class _FlashcardPageState extends State<FlashcardPage>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: isDark
-              ? const [Color(0xFF10121B), Color(0xFF161828)]
+              ? const [darkBackground, darkBackgroundDim]
               : const [Color(0xFFF6F2FF), Colors.white],
         ),
       ),
@@ -1745,8 +1741,7 @@ class _FlashcardPageState extends State<FlashcardPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _isDarkTheme ? const Color(0xFF0B0A11) : Colors.white,
-      // AppBar removido: a HomePage já fornece o AppBar global (AppTopNavBar)
+      backgroundColor: _isDarkTheme ? darkBackground : Colors.white,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Stack(
