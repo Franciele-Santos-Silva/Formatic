@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:formatic/login_page.dart';
-import 'package:formatic/home_page.dart';
-import 'package:formatic/services/supabase_config.dart';
-import 'package:formatic/services/auth_service.dart';
 import 'dart:io' show Platform;
 import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:formatic/features/auth/pages/login_page.dart';
+import 'package:formatic/features/home/pages/home_page.dart';
+import 'package:formatic/services/auth/auth_service.dart';
+import 'package:formatic/services/core/supabase_config.dart';
 
 // window_size allows setting the native window size on desktop platforms so
 // we can emulate a mobile resolution while running on Windows/Mac/Linux.
@@ -107,10 +108,7 @@ class _MyAppState extends State<MyApp> {
               isDarkMode: _themeMode == ThemeMode.dark,
               onThemeToggle: _toggleTheme,
             )
-          : LoginPage(
-              isDarkMode: _themeMode == ThemeMode.dark,
-              onThemeToggle: _toggleTheme,
-            ),
+          : LoginPage(onThemeToggle: _toggleTheme),
     );
   }
 }
