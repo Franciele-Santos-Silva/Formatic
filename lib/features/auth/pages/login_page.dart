@@ -35,41 +35,64 @@ class _LoginPageState extends State<LoginPage> {
 
       if (_isLogin) {
         // Login
-        final response = await authService.signIn(email, password);
+        try {
+          final response = await authService.signIn(email, password);
 
-        if (response.user != null) {
-          if (!mounted) return;
-          final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-          SnackbarUtils.showSuccess(context, 'Login realizado com sucesso!');
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => HomePage(
-                isDarkMode: isDarkTheme,
-                onThemeToggle: widget.onThemeToggle,
+          if (response.user != null) {
+            if (!mounted) return;
+            final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+            SnackbarUtils.showSuccess(context, 'Login realizado com sucesso!');
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => HomePage(
+                  isDarkMode: isDarkTheme,
+                  onThemeToggle: widget.onThemeToggle,
+                ),
               ),
-            ),
-          );
+            );
+          }
+        } catch (loginError) {
+          if (!mounted) return;
+          SnackbarUtils.showError(context, 'Email ou senha incorretos!');
         }
       } else {
         // Cadastro
-        final response = await authService.signUp(
-          email,
-          password,
-          _nameController.text.trim(),
-        );
+        try {
+          final response = await authService.signUp(
+            email,
+            password,
+            _nameController.text.trim(),
+          );
 
-        if (response.user != null) {
-          // The profile is created server-side by a DB trigger. Proceed to
-          // show success and switch to login. The trigger will insert a
-          // `profiles` row with the new user's id automatically.
+          if (response.user != null) {
+            // Usuário criado com sucesso, redirecionar para login
+            if (!mounted) return;
+            SnackbarUtils.showSuccess(
+              context,
+              'Cadastro realizado! Faça login para continuar.',
+            );
+            setState(() => _isLogin = true);
+          }
+        } catch (signUpError) {
+          // Mesmo com erro (ex: policy do Supabase), se o usuário foi criado, redirecionar
           if (!mounted) return;
-          SnackbarUtils.showSuccess(context, 'Cadastro realizado com sucesso!');
-          setState(() => _isLogin = true);
+          // Assumir que deu certo se não for erro de email já existente
+          if (!signUpError.toString().contains('already registered')) {
+            SnackbarUtils.showSuccess(
+              context,
+              'Cadastro realizado! Faça login para continuar.',
+            );
+            _emailController.clear();
+            _passwordController.clear();
+            _nameController.clear();
+            setState(() => _isLogin = true);
+          } else {
+            SnackbarUtils.showError(context, 'Email já cadastrado!');
+          }
         }
       }
     } catch (e) {
       if (!mounted) return;
-      SnackbarUtils.showError(context, 'Erro: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

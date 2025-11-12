@@ -79,15 +79,33 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _profileCard(BuildContext context) {
-    final isDark = widget.isDarkMode;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final Color textColor = isDark ? Colors.white : Colors.black87;
     final Color labelColor = isDark ? Colors.white70 : Colors.grey;
     final Color iconColor = const Color(0xFF8B2CF5);
-    final Color mainProfileColor = const Color(0xFF8B2CF5);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 12),
+        _profileInfoRow(
+          Icons.fingerprint,
+          'UID',
+          _uid ?? '',
+          textColor,
+          labelColor,
+          iconColor,
+        ),
+        const SizedBox(height: 12),
+        _profileInfoRow(
+          Icons.person,
+          'Nome',
+          _nameController.text.isEmpty ? 'Usuário' : _nameController.text,
+          textColor,
+          labelColor,
+          iconColor,
+        ),
         const SizedBox(height: 12),
         _profileInfoRow(
           Icons.email,
@@ -98,17 +116,6 @@ class _ProfilePageState extends State<ProfilePage> {
           iconColor,
         ),
         const SizedBox(height: 12),
-        _profileInfoRow(
-          Icons.phone_android,
-          'Telefone',
-          _phoneController.text.isEmpty
-              ? 'Telefone não inserido'
-              : _phoneController.text,
-          textColor,
-          labelColor,
-          iconColor,
-        ),
-        const SizedBox(height: 16),
         _profileInfoRow(
           Icons.calendar_today,
           'Criado em',
@@ -127,27 +134,6 @@ class _ProfilePageState extends State<ProfilePage> {
           iconColor,
         ),
         const SizedBox(height: 18),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton.icon(
-            icon: Icon(Icons.edit, color: mainProfileColor),
-            label: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'Adicionar / Editar telefone',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: mainProfileColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            onPressed: _showEditPhoneDialog,
-          ),
-        ),
-        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: TextButton(
@@ -178,6 +164,9 @@ class _ProfilePageState extends State<ProfilePage> {
     Color labelColor,
     Color iconColor,
   ) {
+    // UID deve ter texto menor
+    final isUid = label == 'UID';
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -209,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text(
                   value.isEmpty ? '-' : value,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: isUid ? 12 : 18,
                     color: textColor,
                     fontWeight: FontWeight.w600,
                   ),
@@ -229,46 +218,9 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _createdAt;
   String? _updatedAt;
   bool _loading = true;
-  // phone editing handled via dialog
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
 
   // (removed profile background color persistence)
-
-  Future<void> _saveProfile() async {
-    setState(() => _loading = true);
-
-    try {
-      final user = AuthService().currentUser;
-      if (user == null) throw Exception('Usuário não autenticado');
-
-      // Criar perfil atualizado
-      final updatedProfile = UserProfile(
-        id: user.id,
-        username: _nameController.text.trim(),
-        email: _email ?? user.email ?? '',
-        phone: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
-        createdAt: DateTime.parse(
-          _createdAt?.split(' ')[0].split('/').reversed.join('-') ??
-              DateTime.now().toIso8601String(),
-        ),
-      );
-
-      // Salvar no backend (nota: o ProfileService não tem método update, então criamos um novo)
-      final profileService = ProfileService();
-      await profileService.createProfile(updatedProfile);
-
-      setState(() => _loading = false);
-      if (!mounted) return;
-      SnackbarUtils.showSuccess(context, 'Perfil atualizado!');
-    } catch (e) {
-      setState(() => _loading = false);
-      if (!mounted) return;
-      SnackbarUtils.showError(context, 'Erro ao atualizar perfil: $e');
-    }
-  }
 
   // Avatar handling: save/load local path in SharedPreferences and pick from gallery
   Future<void> _saveAvatarPath(String path) async {
@@ -314,10 +266,6 @@ class _ProfilePageState extends State<ProfilePage> {
           }
         } catch (e) {
           if (mounted) {
-            SnackbarUtils.showError(
-              context,
-              'Aviso: avatar salvo localmente, upload falhou: $e',
-            );
           }
         }
       }
@@ -327,49 +275,11 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _showEditPhoneDialog() async {
-    final controller = TextEditingController(text: _phoneController.text);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Editar telefone'),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              PhoneNumberFormatter(),
-            ],
-            decoration: const InputDecoration(labelText: 'Telefone'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              style: purpleElevatedStyle(),
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Salvar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      setState(() => _phoneController.text = controller.text);
-      await _saveProfile();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    // final theme = Theme.of(context); // Não utilizado
-    final isDark = widget.isDarkMode;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final Color mainColor = const Color(0xFF8B2CF5);
-    final Color cardColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
 
     return Scaffold(
       appBar: AppTopNavBar(
@@ -465,20 +375,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  if (_uid != null && _uid!.isNotEmpty)
-                    Text(
-                      _uid!,
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  const SizedBox(height: 6),
-                  // Nome centralizado abaixo da foto (menor)
+                  const SizedBox(height: 12),
+                  // Nome centralizado abaixo da foto
                   Text(
                     _nameController.text.isEmpty
                         ? 'Usuário'
                         : _nameController.text,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -493,7 +397,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: cardColor,
+                  color: isDark ? const Color(0xFF2B2D42) : Colors.white,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
@@ -517,6 +421,15 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _loadProfile();
+  }
+
+  @override
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Força reconstrução quando o tema muda
+    if (oldWidget.isDarkMode != widget.isDarkMode) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -549,7 +462,6 @@ class _ProfilePageState extends State<ProfilePage> {
         _uid = profile!.id;
         _email = profile.email;
         _nameController.text = profile.username;
-        _phoneController.text = profile.phone ?? '';
         _avatarUrl = profile.avatarUrl;
         _createdAt =
             '${profile.createdAt.day}/${profile.createdAt.month}/${profile.createdAt.year} ${profile.createdAt.hour}:${profile.createdAt.minute.toString().padLeft(2, '0')}';
@@ -569,7 +481,6 @@ class _ProfilePageState extends State<ProfilePage> {
           _uid = "erro-carregamento";
           _email = "erro@exemplo.com";
           _nameController.text = "Erro no carregamento";
-          _phoneController.text = "";
           _avatarUrl = null;
           final now = DateTime.now();
           _createdAt =
