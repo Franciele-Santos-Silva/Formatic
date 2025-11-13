@@ -27,7 +27,6 @@ class FlashcardService {
         .select()
         .single();
 
-    // Registra a atividade localmente
     await ActivityLoggerService.logActivity(
       action: ActivityLoggerService.actionAdd,
       type: ActivityLoggerService.typeFlashcard,
@@ -42,7 +41,6 @@ class FlashcardService {
         .update(flashcard.toJson())
         .eq('id', flashcard.id);
 
-    // Registra a atividade localmente
     await ActivityLoggerService.logActivity(
       action: ActivityLoggerService.actionEdit,
       type: ActivityLoggerService.typeFlashcard,
@@ -52,7 +50,6 @@ class FlashcardService {
   }
 
   Future<void> deleteFlashcard(String flashcardId) async {
-    // Busca o flashcard antes de deletar
     final flashcard = await client
         .from('flashcards')
         .select()
@@ -61,7 +58,6 @@ class FlashcardService {
 
     await client.from('flashcards').delete().eq('id', flashcardId);
 
-    // Registra a atividade localmente
     await ActivityLoggerService.logActivity(
       action: ActivityLoggerService.actionDelete,
       type: ActivityLoggerService.typeFlashcard,

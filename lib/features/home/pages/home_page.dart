@@ -39,7 +39,6 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
 
-    // Atualiza o dashboard quando voltar para a home
     if (index == 2 && _dashboardKey.currentState != null) {
       (_dashboardKey.currentState as dynamic).refreshData();
     }

@@ -43,7 +43,6 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    // Limpa a citação salva do usuário antes de fazer logout
     final userId = client.auth.currentUser?.id;
     if (userId != null) {
       final prefs = await SharedPreferences.getInstance();

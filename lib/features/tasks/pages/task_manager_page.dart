@@ -65,7 +65,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Título do Dialog
                         Text(
                           editTask == null
                               ? '✨ Nova Tarefa'
@@ -76,7 +75,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // Campo Título
                         TextField(
                           decoration: InputDecoration(
                             labelText: 'Título',
@@ -89,7 +87,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           onChanged: (v) => title = v,
                         ),
                         const SizedBox(height: 16),
-                        // Campo Descrição
                         TextField(
                           decoration: InputDecoration(
                             labelText: 'Descrição',
@@ -103,10 +100,8 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           onChanged: (v) => description = v,
                         ),
                         const SizedBox(height: 20),
-                        // Data e Hora
                         Column(
                           children: [
-                            // Data
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
@@ -153,7 +148,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            // Hora
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
@@ -197,7 +191,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           ],
                         ),
                         const SizedBox(height: 24),
-                        // Botões de ação
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -334,7 +327,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
           final filteredTasks = _controller.searchTasks(_searchQuery);
           filteredTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
-          // Separar tarefas pendentes e completadas
           final pendingTasks = filteredTasks
               .where((t) => !t.isCompleted)
               .toList();
@@ -358,8 +350,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
           final firstDayOfMonth = DateTime(_selectedYear, _selectedMonth, 1);
           final lastDayOfMonth = DateTime(_selectedYear, _selectedMonth + 1, 0);
           final daysInMonth = lastDayOfMonth.day;
-          // Corrigir offset: domingo = 0, segunda = 1, etc
-          // DateTime.weekday retorna: segunda = 1, domingo = 7
           final weekDayOffset = firstDayOfMonth.weekday == 7
               ? 0
               : firstDayOfMonth.weekday;
@@ -387,7 +377,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                   controller: _scrollController,
                   padding: const EdgeInsets.all(20),
                   children: [
-                    // Barra de busca
                     Container(
                       decoration: BoxDecoration(
                         color: widget.isDarkMode
@@ -445,7 +434,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                       ),
                     ),
                     const SizedBox(height: 28),
-                    // Tarefas para hoje
                     const Text(
                       ' Tarefas para hoje',
                       style: TextStyle(
@@ -546,7 +534,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                         );
                       }),
                     const SizedBox(height: 32),
-                    // Calendário
                     const Text(
                       'Calendário',
                       style: TextStyle(
@@ -574,7 +561,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          // Navegação do mês
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -638,7 +624,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Dias da semana - cabeçalho fixo
                           Table(
                             children: [
                               TableRow(
@@ -665,28 +650,22 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          // Grade do calendário - 7 colunas fixas
                           LayoutBuilder(
                             builder: (context, constraints) {
                               final cellSize =
-                                  (constraints.maxWidth - 24) /
-                                  7; // 24 = padding total
+                                  (constraints.maxWidth - 24) / 7;
 
-                              // Calcular total de células necessárias
                               final totalCells = weekDayOffset + daysInMonth;
                               final totalRows = (totalCells / 7).ceil();
 
-                              // Criar lista de widgets para a grade
                               final calendarCells = <Widget>[];
 
-                              // Adicionar células vazias antes do primeiro dia
                               for (int i = 0; i < weekDayOffset; i++) {
                                 calendarCells.add(
                                   SizedBox(width: cellSize, height: cellSize),
                                 );
                               }
 
-                              // Adicionar os dias do mês
                               for (int d = 1; d <= daysInMonth; d++) {
                                 final hasTask = taskDays.contains(d);
                                 final isToday =
@@ -727,7 +706,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                                 );
                               }
 
-                              // Preencher células vazias restantes para completar a grade
                               final remainingCells =
                                   (totalRows * 7) - totalCells;
                               for (int i = 0; i < remainingCells; i++) {
@@ -751,7 +729,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    // Todas as tarefas pendentes
                     const Text(
                       'Tarefas Pendentes',
                       style: TextStyle(
@@ -876,7 +853,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                         );
                       }),
                     const SizedBox(height: 32),
-                    // Tarefas Completadas
                     if (completedTasks.isNotEmpty) ...[
                       const Text(
                         'Tarefas Completadas',
@@ -958,7 +934,6 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                     const SizedBox(height: 100),
                   ],
                 ),
-                // Botão flutuante de adicionar
                 Positioned(
                   left: 20,
                   right: 20,

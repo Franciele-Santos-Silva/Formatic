@@ -14,7 +14,6 @@ ButtonStyle purpleElevatedStyle({
   );
 }
 
-// placeholder for future text-button helper
 ButtonStyle purpleTextButtonStyle({double radius = 14}) {
   return TextButton.styleFrom(
     foregroundColor: const Color(0xFF8B2CF5),

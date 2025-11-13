@@ -7,7 +7,6 @@ import '../models/task_ui.dart';
 class TaskMapper {
   /// Converte Task do banco para TaskUI usado na interface
   static TaskUI fromTask(Task task) {
-    // Parse dos metadados armazenados na descrição
     Map<String, dynamic> metadata = {};
     String? actualDescription;
 
@@ -21,14 +20,12 @@ class TaskMapper {
           }
         }
       } catch (e) {
-        // Se falhar ao parsear, usa a descrição original
         actualDescription = task.description;
       }
     } else {
       actualDescription = task.description;
     }
 
-    // Extrai dueDate e dueTime dos metadados
     final dueDateTimeStr = metadata['dueDateTime'] as String?;
     DateTime dueDate;
     TimeOfDay dueTime;
@@ -38,7 +35,6 @@ class TaskMapper {
       dueDate = DateTime(dueDateTime.year, dueDateTime.month, dueDateTime.day);
       dueTime = TimeOfDay(hour: dueDateTime.hour, minute: dueDateTime.minute);
     } else {
-      // Fallback para createdAt se não houver dueDateTime
       dueDate = DateTime(
         task.createdAt.year,
         task.createdAt.month,
@@ -47,13 +43,11 @@ class TaskMapper {
       dueTime = const TimeOfDay(hour: 12, minute: 0);
     }
 
-    // Extrai cor dos metadados
     final colorValue = metadata['color'] as int?;
     final color = colorValue != null
         ? Color(colorValue)
         : const Color(0xFF8B2CF5);
 
-    // Extrai isCompleted dos metadados
     final isCompleted = metadata['isCompleted'] as bool? ?? false;
 
     return TaskUI(
@@ -70,14 +64,12 @@ class TaskMapper {
 
   /// Converte TaskUI para Task do banco, incluindo userId
   static Task toTask(TaskUI taskUI, String userId) {
-    // Cria metadados com informações extras
     final metadata = {
       'dueDateTime': taskUI.fullDueDateTime.toIso8601String(),
       'color': taskUI.color.value,
       'isCompleted': taskUI.isCompleted,
     };
 
-    // Combina metadados com a descrição
     final metaString = '##META##${jsonEncode(metadata)}##META##';
     final fullDescription = taskUI.description != null
         ? '$metaString${taskUI.description}'

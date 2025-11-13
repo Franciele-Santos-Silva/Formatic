@@ -34,10 +34,8 @@ class _DashboardContentState extends State<DashboardContent> {
   int _totalBooks = 0;
   List<Book> _recommendedBooks = [];
 
-  // Para combinar atividades recentes
   List<Map<String, dynamic>> _recentActivities = [];
 
-  // Sistema de citações inspiradoras
   final List<Map<String, String>> _quotes = [
     {
       'text':
@@ -112,27 +110,22 @@ class _DashboardContentState extends State<DashboardContent> {
     _loadDashboardData();
   }
 
-  // Método público para forçar atualização
   void refreshData() {
     _loadDashboardData();
   }
 
-  // Carrega a citação baseada na sessão do usuário
   Future<void> _loadQuoteForSession() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
     final savedQuoteKey = 'quote_for_user_$userId';
 
-    // Verifica se já existe uma citação salva para esta sessão
     final savedQuoteIndex = prefs.getInt(savedQuoteKey);
 
     if (savedQuoteIndex != null && savedQuoteIndex < _quotes.length) {
-      // Usa a citação salva
       setState(() {
         _currentQuote = _quotes[savedQuoteIndex];
       });
     } else {
-      // Seleciona uma nova citação aleatória e salva
       final random = DateTime.now().millisecondsSinceEpoch % _quotes.length;
       await prefs.setInt(savedQuoteKey, random);
       setState(() {
@@ -160,7 +153,6 @@ class _DashboardContentState extends State<DashboardContent> {
       final books = results[2] as List<Book>;
       final loggedActivities = results[3] as List<Map<String, dynamic>>;
 
-      // Converte atividades do log para o formato do dashboard
       final activities = <Map<String, dynamic>>[];
 
       for (var activity in loggedActivities) {
@@ -197,7 +189,6 @@ class _DashboardContentState extends State<DashboardContent> {
         _pendingTasks = tasks.length;
         _totalFlashcards = flashcards.length;
         _totalBooks = books.length;
-        // Recomendações: livros variados
         _recommendedBooks = [
           if (books.length > 2) books[2],
           if (books.length > 4) books[4],
@@ -239,21 +230,17 @@ class _DashboardContentState extends State<DashboardContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Card grande de saudação estilo financeiro
                     _buildBalanceCard(),
                     const SizedBox(height: 28),
 
-                    // Services Grid (4 botões principais)
                     _buildServicesSection(),
                     const SizedBox(height: 28),
 
-                    // Livros Recomendados
                     if (_recommendedBooks.isNotEmpty) ...[
                       _buildRecommendedBooksSection(),
                       const SizedBox(height: 28),
                     ],
 
-                    // Recent Transactions (Atividades)
                     if (_recentActivities.isNotEmpty) _buildRecentActivity(),
                   ],
                 ),
@@ -297,7 +284,6 @@ class _DashboardContentState extends State<DashboardContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header com saudação maior
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -324,7 +310,6 @@ class _DashboardContentState extends State<DashboardContent> {
 
           const SizedBox(height: 24),
 
-          // Citação inspiradora
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -466,7 +451,6 @@ class _DashboardContentState extends State<DashboardContent> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Badge com número
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -548,7 +532,6 @@ class _DashboardContentState extends State<DashboardContent> {
         ),
         const SizedBox(height: 16),
 
-        // Lista de atividades combinadas (tarefas + flashcards)
         ..._recentActivities
             .take(5)
             .map(
@@ -641,7 +624,6 @@ class _DashboardContentState extends State<DashboardContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Imagem do livro
                 Expanded(
                   flex: 3,
                   child: Container(
@@ -683,7 +665,6 @@ class _DashboardContentState extends State<DashboardContent> {
                     ),
                   ),
                 ),
-                // Info do livro
                 Expanded(
                   flex: 2,
                   child: Container(

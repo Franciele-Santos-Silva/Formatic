@@ -16,7 +16,6 @@ class TaskController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Carrega tarefas do Supabase
   Future<void> loadTasks() async {
     _isLoading = true;
     _error = null;
@@ -35,7 +34,6 @@ class TaskController extends ChangeNotifier {
     }
   }
 
-  // Cria uma tarefa no Supabase
   Future<void> createTask(TaskUI task) async {
     try {
       final userId = _authService.currentUser?.id;
@@ -58,7 +56,6 @@ class TaskController extends ChangeNotifier {
     }
   }
 
-  // Atualiza uma tarefa no Supabase
   Future<void> updateTask(TaskUI task) async {
     if (task.id == null) return;
 
@@ -86,7 +83,6 @@ class TaskController extends ChangeNotifier {
     }
   }
 
-  // Deleta uma tarefa no Supabase
   Future<void> deleteTask(String taskId) async {
     try {
       await _taskService.deleteTask(taskId);
@@ -99,7 +95,6 @@ class TaskController extends ChangeNotifier {
     }
   }
 
-  // Alterna o status de completado e atualiza no banco
   Future<void> toggleTaskStatus(String taskId) async {
     final taskIndex = _tasks.indexWhere((t) => t.id == taskId);
     if (taskIndex == -1) return;
@@ -113,7 +108,6 @@ class TaskController extends ChangeNotifier {
     await updateTask(updatedTask);
   }
 
-  // Busca tarefas por query
   List<TaskUI> searchTasks(String query) {
     if (query.isEmpty) return _tasks;
 
@@ -124,14 +118,12 @@ class TaskController extends ChangeNotifier {
     }).toList();
   }
 
-  // Pega tarefas de um mês específico
   List<TaskUI> getTasksForMonth(int year, int month) {
     return _tasks.where((task) {
       return task.dueDate.year == year && task.dueDate.month == month;
     }).toList();
   }
 
-  // Pega tarefas de uma data específica
   List<TaskUI> getTasksForDate(DateTime date) {
     return _tasks.where((task) {
       return task.dueDate.year == date.year &&

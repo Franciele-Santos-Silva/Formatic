@@ -18,7 +18,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  // O telefone será editado apenas na tela de perfil
   bool _isLogin = true;
   bool _obscurePassword = true;
   bool _rememberMe = false;
@@ -34,7 +33,6 @@ class _LoginPageState extends State<LoginPage> {
       final authService = AuthService();
 
       if (_isLogin) {
-        // Login
         try {
           final response = await authService.signIn(email, password);
 
@@ -56,7 +54,6 @@ class _LoginPageState extends State<LoginPage> {
           SnackbarUtils.showError(context, 'Email ou senha incorretos!');
         }
       } else {
-        // Cadastro
         try {
           final response = await authService.signUp(
             email,
@@ -65,7 +62,6 @@ class _LoginPageState extends State<LoginPage> {
           );
 
           if (response.user != null) {
-            // Usuário criado com sucesso, redirecionar para login
             if (!mounted) return;
             SnackbarUtils.showSuccess(
               context,
@@ -74,9 +70,7 @@ class _LoginPageState extends State<LoginPage> {
             setState(() => _isLogin = true);
           }
         } catch (signUpError) {
-          // Mesmo com erro (ex: policy do Supabase), se o usuário foi criado, redirecionar
           if (!mounted) return;
-          // Assumir que deu certo se não for erro de email já existente
           if (!signUpError.toString().contains('already registered')) {
             SnackbarUtils.showSuccess(
               context,
@@ -129,12 +123,10 @@ class _LoginPageState extends State<LoginPage> {
         ),
         child: Column(
           children: [
-            // Seção superior com logo e botão de tema
             Expanded(
               flex: 4,
               child: Stack(
                 children: [
-                  // Botão de alternância de tema
                   Positioned(
                     top: 50,
                     right: 20,
@@ -147,7 +139,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  // Logo centralizada
                   Center(
                     child: SizedBox(
                       width: 180,
@@ -181,7 +172,6 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
-            // Seção inferior com formulário
             Expanded(
               flex: 6,
               child: Container(
@@ -220,7 +210,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 30),
-                        // Campo adicional para cadastro: nome
                         if (!_isLogin) ...[
                           TextFormField(
                             controller: _nameController,
@@ -328,12 +317,10 @@ class _LoginPageState extends State<LoginPage> {
                             return null;
                           },
                         ),
-                        // Seção apenas para login: lembrar de mim e esqueceu senha
                         if (_isLogin) ...[
                           const SizedBox(height: 20),
                           Row(
                             children: [
-                              // Checkbox "Lembrar de mim"
                               Checkbox(
                                 value: _rememberMe,
                                 onChanged: (value) {
@@ -361,7 +348,6 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               const Spacer(),
-                              // Link "Esqueceu a senha?"
                               GestureDetector(
                                 onTap: () {
                                   SnackbarUtils.showError(

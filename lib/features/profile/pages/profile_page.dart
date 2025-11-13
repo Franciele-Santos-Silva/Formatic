@@ -6,14 +6,12 @@ import 'package:formatic/core/theme/button_styles.dart';
 import 'package:formatic/core/utils/snackbar_utils.dart';
 import 'package:formatic/features/auth/pages/login_page.dart';
 import 'package:formatic/features/home/widgets/app_top_nav_bar.dart';
-// bottom nav removed from profile per UI update
 import 'package:formatic/models/auth/user_profile.dart';
 import 'package:formatic/services/auth/auth_service.dart';
 import 'package:formatic/services/profile/profile_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Formatter to enforce digits-only input and format as (xx) xxxxx-xxxx
 class PhoneNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -24,7 +22,6 @@ class PhoneNumberFormatter extends TextInputFormatter {
     String formatted = '';
     if (digits.isEmpty) return newValue.copyWith(text: '');
 
-    // Build (xx) xxxxx-xxxx
     if (digits.length <= 2) {
       formatted = '(${digits.substring(0, digits.length)}';
     } else if (digits.length <= 7) {
@@ -35,7 +32,6 @@ class PhoneNumberFormatter extends TextInputFormatter {
       final part3 = digits.length > 7 ? digits.substring(7) : '';
       formatted = '($part1) $part2${part3.isNotEmpty ? '-$part3' : ''}';
     } else {
-      // Limit to 11 digits
       final d = digits.substring(0, 11);
       final part1 = d.substring(0, 2);
       final part2 = d.substring(2, 7);
@@ -50,7 +46,6 @@ class PhoneNumberFormatter extends TextInputFormatter {
   }
 }
 
-// Avatar picking will be handled via ImagePicker and persisted locally (SharedPreferences)
 
 class ProfilePage extends StatefulWidget {
   final bool isDarkMode;
@@ -68,7 +63,6 @@ class _ProfilePageState extends State<ProfilePage> {
   double _avatarScale = 1.0;
 
   Future<void> _onAvatarTap() async {
-    // small press animation, then open picker
     setState(() => _avatarScale = 0.95);
     await Future.delayed(const Duration(milliseconds: 120));
     if (!mounted) return;
@@ -154,7 +148,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ],
     );
   }
-  // _profileField removed; phone is displayed with _profileInfoRow and edited via dialog
 
   Widget _profileInfoRow(
     IconData icon,
@@ -164,7 +157,6 @@ class _ProfilePageState extends State<ProfilePage> {
     Color labelColor,
     Color iconColor,
   ) {
-    // UID deve ter texto menor
     final isUid = label == 'UID';
 
     return Container(
@@ -220,9 +212,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _loading = true;
   final _nameController = TextEditingController();
 
-  // (removed profile background color persistence)
 
-  // Avatar handling: save/load local path in SharedPreferences and pick from gallery
   Future<void> _saveAvatarPath(String path) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('profile_avatar_path', path);
@@ -238,13 +228,11 @@ class _ProfilePageState extends State<ProfilePage> {
         imageQuality: 85,
       );
       if (file != null) {
-        // Show local preview immediately
         setState(() {
           _avatarUrl = file.path;
         });
         await _saveAvatarPath(file.path);
 
-        // Attempt to upload to Supabase Storage and update profile record
         try {
           final profileService = ProfileService();
           final user = AuthService().currentUser;
@@ -254,11 +242,9 @@ class _ProfilePageState extends State<ProfilePage> {
               user.id,
             );
             if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
-              // update remote profile with avatar URL
               await profileService.patchProfile(user.id, {
                 'avatar_url': uploadedUrl,
               });
-              // prefer the remote URL for display
               if (mounted) {
                 setState(() => _avatarUrl = uploadedUrl);
               }
@@ -309,7 +295,6 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         child: Column(
           children: [
-            // Seção superior com avatar circular e UID acima do nome
             Expanded(
               flex: 3,
               child: Column(
@@ -321,7 +306,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        // Animated pulse on tap
                         AnimatedScale(
                           scale: _avatarScale,
                           duration: const Duration(milliseconds: 120),
@@ -376,7 +360,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Nome centralizado abaixo da foto
                   Text(
                     _nameController.text.isEmpty
                         ? 'Usuário'
@@ -391,7 +374,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-            // Seção inferior com card
             Expanded(
               flex: 6,
               child: Container(
@@ -426,7 +408,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void didUpdateWidget(ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Força reconstrução quando o tema muda
     if (oldWidget.isDarkMode != widget.isDarkMode) {
       setState(() {});
     }
@@ -442,14 +423,12 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      // Tentar carregar perfil do backend
       final profileService = ProfileService();
       UserProfile? profile;
 
       try {
         profile = await profileService.getProfile(user.id);
       } catch (e) {
-        // Se não encontrar perfil, criar um padrão
         profile = UserProfile(
           id: user.id,
           username: user.email!.split('@')[0],
@@ -468,14 +447,12 @@ class _ProfilePageState extends State<ProfilePage> {
         _updatedAt =
             '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}';
       });
-      // Prefer a locally saved avatar path if present
       final prefs = await SharedPreferences.getInstance();
       final localPath = prefs.getString('profile_avatar_path');
       if (localPath != null && localPath.isNotEmpty) {
         setState(() => _avatarUrl = localPath);
       }
     } catch (e) {
-      // Em caso de erro, usar dados padrão
       if (mounted) {
         setState(() {
           _uid = "erro-carregamento";
@@ -529,7 +506,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _deleteProfileAndSignOut() async {
     if (_uid == null) return;
     setState(() => _loading = true);
-    // capture navigator before async gaps to avoid using BuildContext across awaits
     final navigator = Navigator.of(context);
     try {
       final profileService = ProfileService();

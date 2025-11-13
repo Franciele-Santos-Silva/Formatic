@@ -42,7 +42,6 @@ class TaskCardModern extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            // Checkbox
             GestureDetector(
               onTap: onToggleStatus,
               child: Container(
@@ -61,13 +60,11 @@ class TaskCardModern extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
-            // Conteúdo
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Título
                   Text(
                     task.title,
                     style: TextStyle(
@@ -82,7 +79,6 @@ class TaskCardModern extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // Descrição (se existir)
                   if (task.description != null && task.description!.isNotEmpty)
                     Text(
                       task.description!,
@@ -94,7 +90,6 @@ class TaskCardModern extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   const SizedBox(height: 6),
-                  // Data e hora
                   Flexible(
                     child: Row(
                       children: [
@@ -139,7 +134,6 @@ class TaskCardModern extends StatelessWidget {
                 ],
               ),
             ),
-            // Menu de opções
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white, size: 24),
               color: Colors.white,

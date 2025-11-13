@@ -110,7 +110,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return Column(
       children: [
-        // Barra de busca e botão de filtros
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -140,7 +139,6 @@ class _LibraryPageState extends State<LibraryPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Botão de filtros
               Container(
                 decoration: BoxDecoration(
                   color: _selectedTags.isNotEmpty
@@ -164,7 +162,6 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
         ),
 
-        // Área de filtros (expansível)
         if (_showFilters)
           Container(
             width: double.infinity,
@@ -225,7 +222,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
         const SizedBox(height: 8),
 
-        // Contador de resultados
         if (!_isLoading)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -242,7 +238,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
         const SizedBox(height: 8),
 
-        // Grade de livros
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -277,7 +272,6 @@ class _LibraryPageState extends State<LibraryPage> {
                   padding: const EdgeInsets.all(16),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: _getCrossAxisCount(context),
-                    // Deixa os cards um pouco mais altos para evitar overflow do conteúdo
                     childAspectRatio: 0.62,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
@@ -330,7 +324,6 @@ class _BookCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Capa do livro
             Expanded(
               flex: 3,
               child: Container(
@@ -350,16 +343,13 @@ class _BookCard extends StatelessWidget {
               ),
             ),
 
-            // Informações do livro
             Expanded(
               flex: 2,
               child: Padding(
-                // Reduz levemente o padding vertical para dar mais respiro
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Título
                     Text(
                       book.title,
                       style: theme.textTheme.titleSmall?.copyWith(
@@ -370,7 +360,6 @@ class _BookCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Autor
                     Text(
                       book.author,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -380,10 +369,8 @@ class _BookCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    // Espaço flexível substituído por espaço fixo para evitar overflow em alturas limítrofes
                     const SizedBox(height: 8),
 
-                    // Primeira tag
                     if (book.tags.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(

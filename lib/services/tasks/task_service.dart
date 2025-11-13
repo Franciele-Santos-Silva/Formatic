@@ -15,7 +15,6 @@ class TaskService {
 
     final createdTask = Task.fromJson(response);
 
-    // Registra a atividade localmente
     await ActivityLoggerService.logActivity(
       action: ActivityLoggerService.actionAdd,
       type: ActivityLoggerService.typeTask,
@@ -45,7 +44,6 @@ class TaskService {
 
     final updatedTask = Task.fromJson(response);
 
-    // Registra a atividade localmente
     await ActivityLoggerService.logActivity(
       action: ActivityLoggerService.actionEdit,
       type: ActivityLoggerService.typeTask,
@@ -57,12 +55,10 @@ class TaskService {
   }
 
   Future<void> deleteTask(String taskId) async {
-    // Busca o nome da tarefa antes de deletar
     final task = await client.from('tasks').select().eq('id', taskId).single();
 
     await client.from('tasks').delete().eq('id', taskId);
 
-    // Registra a atividade localmente
     await ActivityLoggerService.logActivity(
       action: ActivityLoggerService.actionDelete,
       type: ActivityLoggerService.typeTask,

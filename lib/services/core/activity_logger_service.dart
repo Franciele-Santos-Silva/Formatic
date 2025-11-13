@@ -6,12 +6,10 @@ class ActivityLoggerService {
   static const int _maxActivities =
       5; // Mantém apenas as últimas 50 atividades
 
-  // Tipos de atividades
   static const String actionAdd = 'add';
   static const String actionEdit = 'edit';
   static const String actionDelete = 'delete';
 
-  // Tipos de itens
   static const String typeTask = 'tarefa';
   static const String typeFlashcard = 'flashcard';
   static const String typeBook = 'book';
@@ -26,7 +24,6 @@ class ActivityLoggerService {
     final prefs = await SharedPreferences.getInstance();
     final activities = await getActivities();
 
-    // Cria nova atividade
     final newActivity = {
       'action': action,
       'type': type,
@@ -35,15 +32,12 @@ class ActivityLoggerService {
       'timestamp': DateTime.now().toIso8601String(),
     };
 
-    // Adiciona no início da lista
     activities.insert(0, newActivity);
 
-    // Mantém apenas as últimas N atividades
     if (activities.length > _maxActivities) {
       activities.removeRange(_maxActivities, activities.length);
     }
 
-    // Salva no SharedPreferences
     final jsonString = jsonEncode(activities);
     await prefs.setString(_activityKey, jsonString);
   }
