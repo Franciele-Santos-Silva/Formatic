@@ -124,25 +124,25 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           children: [
             Expanded(
-              flex: 4,
+              flex: 3,
               child: Stack(
                 children: [
                   Positioned(
-                    top: 50,
-                    right: 20,
+                    top: 30,
+                    right: 15,
                     child: GestureDetector(
                       onTap: widget.onThemeToggle,
                       child: Icon(
                         isDark ? Icons.light_mode : Icons.dark_mode,
                         color: Colors.white,
-                        size: 28,
+                        size: 24,
                       ),
                     ),
                   ),
                   Center(
                     child: SizedBox(
-                      width: 180,
-                      height: 180,
+                      width: 120,
+                      height: 120,
                       child: Image.asset(
                         'assets/images/logo.png',
                         fit: BoxFit.contain,
@@ -173,63 +173,71 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             Expanded(
-              flex: 6,
+              flex: 7,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: cardColor,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
                   ),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 8),
                         Text(
                           _isLogin ? 'Bem-vindo de volta!' : 'Crie sua conta',
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineMedium?.copyWith(
+                          style: TextStyle(
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: accent,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           _isLogin
                               ? 'Faça login para continuar'
                               : 'Preencha os dados para se cadastrar',
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
+                          style: TextStyle(
+                            fontSize: 13,
                             color: isDark ? Colors.white70 : Colors.black54,
                           ),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         if (!_isLogin) ...[
                           TextFormField(
                             controller: _nameController,
+                            style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               labelText: 'Nome',
+                              labelStyle: const TextStyle(fontSize: 14),
                               prefixIcon: Icon(
                                 Icons.person_outline,
                                 color: mainColor,
+                                size: 20,
                               ),
                               filled: true,
                               fillColor: isDark
                                   ? const Color(0xFF232B36)
                                   : Colors.grey[100],
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(25),
+                                borderRadius: BorderRadius.circular(20),
                                 borderSide: BorderSide.none,
                               ),
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
+                                horizontal: 16,
+                                vertical: 12,
                               ),
                             ),
                             validator: (value) {
@@ -239,27 +247,30 @@ class _LoginPageState extends State<LoginPage> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 14),
                         ],
                         TextFormField(
                           controller: _emailController,
+                          style: const TextStyle(fontSize: 14),
                           decoration: InputDecoration(
                             labelText: 'E-mail',
+                            labelStyle: const TextStyle(fontSize: 14),
                             prefixIcon: Icon(
                               Icons.email_outlined,
                               color: mainColor,
+                              size: 20,
                             ),
                             filled: true,
                             fillColor: isDark
                                 ? const Color(0xFF232B36)
                                 : Colors.grey[100],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(25),
+                              borderRadius: BorderRadius.circular(20),
                               borderSide: BorderSide.none,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
+                              horizontal: 16,
+                              vertical: 12,
                             ),
                           ),
                           keyboardType: TextInputType.emailAddress,
@@ -273,27 +284,30 @@ class _LoginPageState extends State<LoginPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 14),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
+                          style: const TextStyle(fontSize: 14),
                           decoration: InputDecoration(
                             labelText: 'Senha',
+                            labelStyle: const TextStyle(fontSize: 14),
                             prefixIcon: Icon(
                               Icons.lock_outline,
                               color: mainColor,
+                              size: 20,
                             ),
                             filled: true,
                             fillColor: isDark
                                 ? const Color(0xFF232B36)
                                 : Colors.grey[100],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(25),
+                              borderRadius: BorderRadius.circular(20),
                               borderSide: BorderSide.none,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
+                              horizontal: 16,
+                              vertical: 12,
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -301,6 +315,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ? Icons.visibility_off
                                     : Icons.visibility,
                                 color: mainColor,
+                                size: 20,
                               ),
                               onPressed: () => setState(
                                 () => _obscurePassword = !_obscurePassword,
@@ -318,19 +333,22 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         if (_isLogin) ...[
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
-                              Checkbox(
-                                value: _rememberMe,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
-                                activeColor: mainColor,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                              Transform.scale(
+                                scale: 0.85,
+                                child: Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? false;
+                                    });
+                                  },
+                                  activeColor: mainColor,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
                               ),
                               GestureDetector(
                                 onTap: () {
@@ -340,7 +358,8 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                                 child: Text(
                                   'Lembrar de mim',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: TextStyle(
+                                    fontSize: 8,
                                     color: isDark
                                         ? Colors.white70
                                         : Colors.black87,
@@ -357,7 +376,8 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                                 child: Text(
                                   'Esqueceu a senha?',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: TextStyle(
+                                    fontSize: 8,
                                     color: mainColor,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -366,10 +386,10 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                         ],
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
-                          height: 50,
+                          height: 44,
                           child: ElevatedButton(
                             style: purpleElevatedStyle(
                               radius: 25,
@@ -389,19 +409,20 @@ class _LoginPageState extends State<LoginPage> {
                                     _isLogin ? 'Entrar' : 'Cadastrar',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      fontSize: 15,
                                       color: Colors.white,
                                     ),
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 14),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               _isLogin ? 'Não tem conta?' : 'Já tem conta?',
-                              style: theme.textTheme.bodyMedium?.copyWith(
+                              style: TextStyle(
+                                fontSize: 13,
                                 color: isDark ? Colors.white70 : Colors.black54,
                               ),
                             ),
@@ -411,6 +432,7 @@ class _LoginPageState extends State<LoginPage> {
                               style: TextButton.styleFrom(
                                 foregroundColor: mainColor,
                                 textStyle: const TextStyle(
+                                  fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

@@ -237,105 +237,129 @@ class _FlashcardTile extends StatelessWidget {
         child: ExpansionTile(
           iconColor: Colors.white,
           collapsedIconColor: Colors.white.withOpacity(0.85),
-          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           leading: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.psychology_rounded,
               color: Colors.white,
-              size: 24,
+              size: 20,
             ),
           ),
           title: Text(
             flashcard.question,
             style: const TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: 14,
               color: Colors.white,
-              height: 1.4,
+              height: 1.3,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.only(top: 6),
+            child: IntrinsicWidth(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 120),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 9,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        _formatDate(flashcard.createdAt),
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          trailing: SizedBox(
+            width: 85,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  const Icon(
-                    Icons.calendar_today_rounded,
-                    size: 12,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatDate(flashcard.createdAt),
-                    style: const TextStyle(
-                      fontSize: 12,
+                  IconButton(
+                    icon: const Icon(
+                      Icons.edit_rounded,
                       color: Colors.white,
-                      fontWeight: FontWeight.w500,
+                      size: 18,
+                    ),
+                    onPressed: onEdit,
+                    tooltip: 'Editar',
+                    splashRadius: 18,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.delete_rounded,
+                      color: Colors.white.withOpacity(0.9),
+                      size: 18,
+                    ),
+                    onPressed: onDelete,
+                    tooltip: 'Deletar',
+                    splashRadius: 18,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          trailing: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.edit_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                  onPressed: onEdit,
-                  tooltip: 'Editar',
-                  splashRadius: 24,
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.delete_rounded,
-                    color: Colors.white.withOpacity(0.9),
-                    size: 22,
-                  ),
-                  onPressed: onDelete,
-                  tooltip: 'Deletar',
-                  splashRadius: 24,
-                ),
-              ],
-            ),
-          ),
           children: [
             Container(
               width: double.infinity,
-              margin: const EdgeInsets.only(top: 14),
-              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(8),
@@ -343,27 +367,27 @@ class _FlashcardTile extends StatelessWidget {
                         child: const Icon(
                           Icons.lightbulb_rounded,
                           color: Colors.white,
-                          size: 18,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       const Text(
                         'RESPOSTA',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          letterSpacing: 1.6,
+                          letterSpacing: 1.4,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
                     flashcard.answer,
                     style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.6,
+                      fontSize: 14,
+                      height: 1.5,
                       color: Colors.white,
                       fontWeight: FontWeight.w400,
                     ),

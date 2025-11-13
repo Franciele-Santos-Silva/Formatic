@@ -109,6 +109,7 @@ class _LibraryPageState extends State<LibraryPage> {
     final theme = Theme.of(context);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
@@ -166,39 +167,62 @@ class _LibraryPageState extends State<LibraryPage> {
           Container(
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(16),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
+            ),
+            padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Filtros',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        'Filtros',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (_selectedTags.isNotEmpty)
                       TextButton(
                         onPressed: _clearFilters,
-                        child: const Text('Limpar todos'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: const Size(0, 32),
+                        ),
+                        child: Text(
+                          'Limpar',
+                          style: TextStyle(
+                            fontSize: (MediaQuery.of(context).size.width * 0.034).clamp(12.0, 14.0),
+                          ),
+                        ),
                       ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: 6,
+                  runSpacing: 6,
                   children: BookTags.allTags.map((tag) {
                     final isSelected = _selectedTags.contains(tag);
+                    final screenWidth = MediaQuery.of(context).size.width;
                     return FilterChip(
-                      label: Text(BookTags.tagLabels[tag] ?? tag),
+                      label: Text(
+                        BookTags.tagLabels[tag] ?? tag,
+                        style: TextStyle(
+                          fontSize: (screenWidth * 0.032).clamp(11.0, 13.0),
+                        ),
+                      ),
                       selected: isSelected,
                       onSelected: (_) => _toggleTag(tag),
                       backgroundColor:
@@ -213,10 +237,16 @@ class _LibraryPageState extends State<LibraryPage> {
                             ? FontWeight.bold
                             : FontWeight.normal,
                       ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: (screenWidth * 0.02).clamp(6.0, 8.0),
+                        vertical: (screenWidth * 0.01).clamp(3.0, 4.0),
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     );
                   }).toList(),
                 ),
               ],
+            ),
             ),
           ),
 
@@ -245,24 +275,33 @@ class _LibraryPageState extends State<LibraryPage> {
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.library_books_outlined,
-                        size: 64,
+                        size: (MediaQuery.of(context).size.height * 0.08).clamp(40.0, 64.0),
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Nenhum livro encontrado',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(8.0, 16.0)),
+                      Flexible(
+                        child: Text(
+                          'Nenhum livro encontrado',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tente ajustar os filtros',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      SizedBox(height: (MediaQuery.of(context).size.height * 0.01).clamp(4.0, 8.0)),
+                      Flexible(
+                        child: Text(
+                          'Tente ajustar os filtros',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -346,36 +385,28 @@ class _BookCard extends StatelessWidget {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      book.title,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        book.title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-
-                    Text(
-                      book.author,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
                     const SizedBox(height: 8),
 
                     if (book.tags.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 3,
+                          vertical: 2,
                         ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primaryContainer.withOpacity(

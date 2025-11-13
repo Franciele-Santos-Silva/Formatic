@@ -49,62 +49,94 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
     showDialog(
       context: context,
       builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final screenHeight = MediaQuery.of(context).size.height;
+
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return Dialog(
               backgroundColor: Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500),
+                constraints: BoxConstraints(
+                  maxWidth: screenWidth > 550 ? 500 : screenWidth * 0.92,
+                  maxHeight: screenHeight * 0.85,
+                ),
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: EdgeInsets.all(
+                      (screenWidth * 0.055).clamp(18.0, 24.0),
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          editTask == null
-                              ? '✨ Nova Tarefa'
-                              : '✏️ Editar Tarefa',
-                          style: const TextStyle(
+                          editTask == null ? 'Nova Tarefa' : 'Editar Tarefa',
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 22,
+                            fontSize: (screenWidth * 0.052).clamp(18.0, 22.0),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(
+                          height: (screenHeight * 0.018).clamp(14.0, 20.0),
+                        ),
                         TextField(
                           decoration: InputDecoration(
                             labelText: 'Título',
-                            prefixIcon: const Icon(Icons.title),
+                            labelStyle: TextStyle(
+                              fontSize: (screenWidth * 0.038).clamp(14.0, 16.0),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.title,
+                              size: (screenWidth * 0.055).clamp(20.0, 24.0),
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                          ),
+                          style: TextStyle(
+                            fontSize: (screenWidth * 0.04).clamp(14.0, 16.0),
                           ),
                           controller: TextEditingController(text: title),
                           onChanged: (v) => title = v,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: (screenHeight * 0.015).clamp(12.0, 16.0),
+                        ),
                         TextField(
                           decoration: InputDecoration(
                             labelText: 'Descrição',
-                            prefixIcon: const Icon(Icons.description),
+                            labelStyle: TextStyle(
+                              fontSize: (screenWidth * 0.038).clamp(14.0, 16.0),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.description,
+                              size: (screenWidth * 0.055).clamp(20.0, 24.0),
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                          ),
+                          style: TextStyle(
+                            fontSize: (screenWidth * 0.04).clamp(14.0, 16.0),
                           ),
                           controller: TextEditingController(text: description),
                           maxLines: 3,
                           onChanged: (v) => description = v,
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(
+                          height: (screenHeight * 0.018).clamp(14.0, 20.0),
+                        ),
                         Column(
                           children: [
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(12),
+                              padding: EdgeInsets.all(
+                                (screenWidth * 0.028).clamp(10.0, 12.0),
+                              ),
                               decoration: BoxDecoration(
                                 color: color.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
@@ -112,14 +144,22 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     '📅 Data',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 13,
+                                      fontSize: (screenWidth * 0.032).clamp(
+                                        12.0,
+                                        13.0,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    height: (screenHeight * 0.004).clamp(
+                                      3.0,
+                                      4.0,
+                                    ),
+                                  ),
                                   GestureDetector(
                                     onTap: () async {
                                       final now = DateTime.now();
@@ -128,6 +168,65 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                                         initialDate: date ?? now,
                                         firstDate: now,
                                         lastDate: DateTime(now.year + 5),
+                                        builder: (BuildContext context, Widget? child) {
+                                          return Theme(
+                                            data: Theme.of(context).copyWith(
+                                              colorScheme: Theme.of(context)
+                                                  .colorScheme
+                                                  .copyWith(
+                                                    primary: color,
+                                                    onPrimary: Colors.white,
+                                                    surface: Theme.of(
+                                                      context,
+                                                    ).colorScheme.surface,
+                                                  ),
+                                              datePickerTheme:
+                                                  DatePickerThemeData(
+                                                    backgroundColor: Theme.of(
+                                                      context,
+                                                    ).colorScheme.surface,
+                                                    headerBackgroundColor:
+                                                        color,
+                                                    headerForegroundColor:
+                                                        Colors.white,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            16,
+                                                          ),
+                                                    ),
+                                                    dayStyle: TextStyle(
+                                                      fontSize:
+                                                          (screenWidth * 0.036)
+                                                              .clamp(
+                                                                13.0,
+                                                                15.0,
+                                                              ),
+                                                    ),
+                                                    yearStyle: TextStyle(
+                                                      fontSize:
+                                                          (screenWidth * 0.036)
+                                                              .clamp(
+                                                                13.0,
+                                                                15.0,
+                                                              ),
+                                                    ),
+                                                  ),
+                                              textButtonTheme:
+                                                  TextButtonThemeData(
+                                                    style: TextButton.styleFrom(
+                                                      foregroundColor: color,
+                                                      textStyle:
+                                                          const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                    ),
+                                                  ),
+                                            ),
+                                            child: child!,
+                                          );
+                                        },
                                       );
                                       if (picked != null) {
                                         setStateDialog(() => date = picked);
@@ -138,7 +237,10 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                                           ? 'Selecione'
                                           : '${date!.day}/${date!.month}/${date!.year}',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: (screenWidth * 0.04).clamp(
+                                          14.0,
+                                          16.0,
+                                        ),
                                         fontWeight: FontWeight.bold,
                                         color: color,
                                       ),
@@ -147,10 +249,14 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: (screenHeight * 0.012).clamp(10.0, 12.0),
+                            ),
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(12),
+                              padding: EdgeInsets.all(
+                                (screenWidth * 0.028).clamp(10.0, 12.0),
+                              ),
                               decoration: BoxDecoration(
                                 color: color.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
@@ -158,19 +264,73 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     '⏰ Hora',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 13,
+                                      fontSize: (screenWidth * 0.032).clamp(
+                                        12.0,
+                                        13.0,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    height: (screenHeight * 0.004).clamp(
+                                      3.0,
+                                      4.0,
+                                    ),
+                                  ),
                                   GestureDetector(
                                     onTap: () async {
                                       final picked = await showTimePicker(
                                         context: context,
                                         initialTime: time ?? TimeOfDay.now(),
+                                        builder: (BuildContext context, Widget? child) {
+                                          return Theme(
+                                            data: Theme.of(context).copyWith(
+                                              timePickerTheme: TimePickerThemeData(
+                                                backgroundColor: Theme.of(
+                                                  context,
+                                                ).colorScheme.surface,
+                                                dialBackgroundColor: color
+                                                    .withOpacity(0.1),
+                                                dialHandColor: color,
+                                                dialTextColor: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                                hourMinuteTextColor: color,
+                                                hourMinuteColor: color
+                                                    .withOpacity(0.15),
+                                                dayPeriodTextColor: color,
+                                                dayPeriodColor: color
+                                                    .withOpacity(0.15),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                hourMinuteShape:
+                                                    RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
+                                              ),
+                                              textButtonTheme:
+                                                  TextButtonThemeData(
+                                                    style: TextButton.styleFrom(
+                                                      foregroundColor: color,
+                                                      textStyle:
+                                                          const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                    ),
+                                                  ),
+                                            ),
+                                            child: child!,
+                                          );
+                                        },
                                       );
                                       if (picked != null) {
                                         setStateDialog(() => time = picked);
@@ -179,7 +339,10 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                                     child: Text(
                                       time?.format(context) ?? 'Selecione',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: (screenWidth * 0.04).clamp(
+                                          14.0,
+                                          16.0,
+                                        ),
                                         fontWeight: FontWeight.bold,
                                         color: color,
                                       ),
@@ -190,15 +353,27 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(
+                          height: (screenHeight * 0.022).clamp(16.0, 24.0),
+                        ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton(
-                              child: const Text('Cancelar'),
+                              child: Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  fontSize: (screenWidth * 0.038).clamp(
+                                    14.0,
+                                    16.0,
+                                  ),
+                                ),
+                              ),
                               onPressed: () => Navigator.pop(context),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(
+                              width: (screenWidth * 0.025).clamp(8.0, 12.0),
+                            ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: color,
@@ -206,15 +381,25 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: (screenWidth * 0.055).clamp(
+                                    18.0,
+                                    24.0,
+                                  ),
+                                  vertical: (screenHeight * 0.012).clamp(
+                                    10.0,
+                                    12.0,
+                                  ),
                                 ),
                               ),
                               child: Text(
                                 editTask == null ? 'Criar' : 'Atualizar',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: (screenWidth * 0.038).clamp(
+                                    14.0,
+                                    16.0,
+                                  ),
                                 ),
                               ),
                               onPressed: () async {
@@ -467,7 +652,7 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                         ),
                         child: Center(
                           child: Text(
-                            '🎉 Nenhuma tarefa para hoje!',
+                            'Nenhuma tarefa para hoje!',
                             style: TextStyle(
                               fontSize: 16,
                               color: widget.isDarkMode

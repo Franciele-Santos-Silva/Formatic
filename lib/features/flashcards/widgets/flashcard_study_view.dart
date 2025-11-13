@@ -119,6 +119,12 @@ class _FlashcardStudyViewState extends State<FlashcardStudyView>
                     builder: (context, child) {
                       final angle = _flipAnimation.value * math.pi;
                       final isFront = angle < math.pi / 2;
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final screenHeight = MediaQuery.of(context).size.height;
+                      final cardPadding = (screenWidth * 0.08).clamp(
+                        20.0,
+                        40.0,
+                      );
 
                       return Transform(
                         alignment: Alignment.center,
@@ -139,17 +145,24 @@ class _FlashcardStudyViewState extends State<FlashcardStudyView>
                             transform: Matrix4.identity()
                               ..rotateY(isFront ? 0 : math.pi),
                             child: Padding(
-                              padding: const EdgeInsets.all(40),
+                              padding: EdgeInsets.all(cardPadding),
                               child: Column(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: (screenWidth * 0.032).clamp(
+                                        10.0,
+                                        16.0,
+                                      ),
+                                      vertical: (screenWidth * 0.016).clamp(
+                                        6.0,
+                                        8.0,
+                                      ),
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(20),
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -159,43 +172,65 @@ class _FlashcardStudyViewState extends State<FlashcardStudyView>
                                               ? Icons.help_outline_rounded
                                               : Icons.lightbulb_outline_rounded,
                                           color: Colors.white,
-                                          size: 18,
+                                          size: (screenWidth * 0.04).clamp(
+                                            14.0,
+                                            18.0,
+                                          ),
                                         ),
-                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: (screenWidth * 0.016).clamp(
+                                            6.0,
+                                            8.0,
+                                          ),
+                                        ),
                                         Text(
                                           isFront ? 'PERGUNTA' : 'RESPOSTA',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: 12,
+                                            fontSize: (screenWidth * 0.028)
+                                                .clamp(10.0, 12.0),
                                             fontWeight: FontWeight.bold,
-                                            letterSpacing: 2,
+                                            letterSpacing: 1.5,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 32),
-                                  Expanded(
+                                  SizedBox(
+                                    height: (screenHeight * 0.025).clamp(
+                                      16.0,
+                                      32.0,
+                                    ),
+                                  ),
+                                  Flexible(
                                     child: Center(
                                       child: SingleChildScrollView(
                                         child: Text(
                                           isFront
                                               ? currentCard.question
                                               : currentCard.answer,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: 26,
+                                            fontSize: (screenWidth * 0.055)
+                                                .clamp(18.0, 26.0),
                                             fontWeight: FontWeight.w600,
-                                            height: 1.5,
+                                            height: 1.4,
                                           ),
                                           textAlign: TextAlign.center,
                                         ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 32),
+                                  SizedBox(
+                                    height: (screenHeight * 0.025).clamp(
+                                      16.0,
+                                      32.0,
+                                    ),
+                                  ),
                                   Container(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: EdgeInsets.all(
+                                      (screenWidth * 0.032).clamp(12.0, 16.0),
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.15),
                                       shape: BoxShape.circle,
@@ -205,7 +240,10 @@ class _FlashcardStudyViewState extends State<FlashcardStudyView>
                                           ? Icons.psychology_rounded
                                           : Icons.check_circle_rounded,
                                       color: Colors.white,
-                                      size: 40,
+                                      size: (screenWidth * 0.08).clamp(
+                                        32.0,
+                                        40.0,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -363,8 +401,15 @@ class _StudyControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final controlPadding = (screenWidth * 0.045).clamp(16.0, 24.0);
+    final iconSize = (screenWidth * 0.06).clamp(24.0, 28.0);
+    final buttonPadding = (screenWidth * 0.032).clamp(12.0, 16.0);
+    final buttonHorizontalPadding = (screenWidth * 0.065).clamp(24.0, 32.0);
+    final fontSize = (screenWidth * 0.038).clamp(14.0, 16.0);
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(controlPadding),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? AppTheme.darkBackground.withOpacity(0.6)
@@ -387,30 +432,38 @@ class _StudyControls extends StatelessWidget {
               child: IconButton(
                 onPressed: onPrevious,
                 icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                iconSize: 28,
-                padding: const EdgeInsets.all(16),
+                iconSize: iconSize,
+                padding: EdgeInsets.all(buttonPadding),
               ),
             ),
-            ElevatedButton.icon(
-              onPressed: onFlip,
-              icon: const Icon(Icons.flip_rounded, color: Colors.white),
-              label: const Text(
-                'Virar Card',
-                style: TextStyle(
+            Flexible(
+              child: ElevatedButton.icon(
+                onPressed: onFlip,
+                icon: Icon(
+                  Icons.flip_rounded,
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  size: (screenWidth * 0.048).clamp(18.0, 22.0),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+                label: Text(
+                  'Virar Card',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: fontSize,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  shadowColor: Colors.transparent,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: buttonHorizontalPadding,
+                    vertical: buttonPadding,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                 ),
               ),
             ),
@@ -422,8 +475,8 @@ class _StudyControls extends StatelessWidget {
                   Icons.arrow_forward_rounded,
                   color: Colors.white,
                 ),
-                iconSize: 28,
-                padding: const EdgeInsets.all(16),
+                iconSize: iconSize,
+                padding: EdgeInsets.all(buttonPadding),
               ),
             ),
           ],

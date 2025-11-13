@@ -16,17 +16,24 @@ class FlashcardBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final buttonHeight = (screenWidth * 0.12).clamp(48.0, 56.0);
+    final iconSize = (screenWidth * 0.045).clamp(18.0, 22.0);
+    final fontSize = (screenWidth * 0.038).clamp(14.0, 16.0);
+    final spacing = (screenWidth * 0.018).clamp(6.0, 10.0);
+    final horizontalPadding = (screenWidth * 0.05).clamp(16.0, 24.0);
+
     return Positioned(
       left: 0,
       right: 0,
       bottom: 20,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: Row(
           children: [
             Expanded(
               child: SizedBox(
-                height: 56,
+                height: buttonHeight,
                 child: ElevatedButton(
                   onPressed: isStudyDisabled ? null : onStudy,
                   style: ElevatedButton.styleFrom(
@@ -36,7 +43,7 @@ class FlashcardBottomBar extends StatelessWidget {
                     ),
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: Row(
@@ -47,17 +54,21 @@ class FlashcardBottomBar extends StatelessWidget {
                         color: isStudyDisabled
                             ? Colors.white.withOpacity(0.6)
                             : Colors.white,
-                        size: 24,
+                        size: iconSize,
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Estudar',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: isStudyDisabled
-                              ? Colors.white.withOpacity(0.6)
-                              : Colors.white,
+                      SizedBox(width: spacing),
+                      Flexible(
+                        child: Text(
+                          'Estudar',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: fontSize,
+                            color: isStudyDisabled
+                                ? Colors.white.withOpacity(0.6)
+                                : Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],
@@ -65,30 +76,38 @@ class FlashcardBottomBar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: spacing),
             Expanded(
               child: SizedBox(
-                height: 56,
+                height: buttonHeight,
                 child: ElevatedButton(
                   onPressed: onCreate,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.add_rounded, color: Colors.white, size: 24),
-                      SizedBox(width: 12),
-                      Text(
-                        'Novo Card',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.white,
+                    children: [
+                      Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: iconSize,
+                      ),
+                      SizedBox(width: spacing),
+                      Flexible(
+                        child: Text(
+                          'Novo Card',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: fontSize,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],
