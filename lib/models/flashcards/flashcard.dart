@@ -4,6 +4,7 @@ class Flashcard {
   final String question;
   final String answer;
   final DateTime createdAt;
+  final DateTime? updatedAt;
 
   Flashcard({
     required this.id,
@@ -11,6 +12,7 @@ class Flashcard {
     required this.question,
     required this.answer,
     required this.createdAt,
+    this.updatedAt,
   });
 
   factory Flashcard.fromJson(Map<String, dynamic> json) => Flashcard(
@@ -19,6 +21,9 @@ class Flashcard {
     question: json['question'],
     answer: json['answer'],
     createdAt: DateTime.parse(json['created_at']),
+    updatedAt: json['updated_at'] != null
+        ? DateTime.parse(json['updated_at'])
+        : null,
   );
 
   Map<String, dynamic> toJson() => {

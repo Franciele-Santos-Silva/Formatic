@@ -334,7 +334,15 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
           final filteredTasks = _controller.searchTasks(_searchQuery);
           filteredTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
-          final todayTasks = filteredTasks.where((t) {
+          // Separar tarefas pendentes e completadas
+          final pendingTasks = filteredTasks
+              .where((t) => !t.isCompleted)
+              .toList();
+          final completedTasks = filteredTasks
+              .where((t) => t.isCompleted)
+              .toList();
+
+          final todayTasks = pendingTasks.where((t) {
             return t.dueDate.year == today.year &&
                 t.dueDate.month == today.month &&
                 t.dueDate.day == today.day;
@@ -743,16 +751,16 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    // Todas as tarefas
+                    // Todas as tarefas pendentes
                     const Text(
-                      'Todas as tarefas',
+                      'Tarefas Pendentes',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
                       ),
                     ),
                     const SizedBox(height: 14),
-                    if (filteredTasks.isEmpty)
+                    if (pendingTasks.isEmpty)
                       Container(
                         padding: const EdgeInsets.all(40),
                         decoration: BoxDecoration(
@@ -787,7 +795,7 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Nenhuma tarefa criada',
+                                'Nenhuma tarefa pendente',
                                 style: TextStyle(
                                   fontSize: 18,
                                   color: widget.isDarkMode
@@ -811,8 +819,8 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           ),
                         ),
                       ),
-                    if (filteredTasks.isNotEmpty)
-                      ...filteredTasks.map((task) {
+                    if (pendingTasks.isNotEmpty)
+                      ...pendingTasks.map((task) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: TaskCardModern(
@@ -867,6 +875,86 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           ),
                         );
                       }),
+                    const SizedBox(height: 32),
+                    // Tarefas Completadas
+                    if (completedTasks.isNotEmpty) ...[
+                      const Text(
+                        'Tarefas Completadas',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ...completedTasks.map((task) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Opacity(
+                            opacity: 0.7,
+                            child: TaskCardModern(
+                              task: task,
+                              onTap: () {},
+                              onEdit: () => _showTaskDialog(editTask: task),
+                              onDelete: () async {
+                                if (task.id != null) {
+                                  try {
+                                    await _controller.deleteTask(task.id!);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Tarefa removida'),
+                                          backgroundColor: Color.fromARGB(
+                                            255,
+                                            255,
+                                            0,
+                                            0,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '❌ Erro ao remover: $e',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              onToggleStatus: () async {
+                                if (task.id != null) {
+                                  try {
+                                    await _controller.toggleTaskStatus(
+                                      task.id!,
+                                    );
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('❌ Erro: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
                     const SizedBox(height: 100),
                   ],
                 ),
