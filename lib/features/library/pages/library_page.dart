@@ -181,72 +181,74 @@ class _LibraryPageState extends State<LibraryPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'Filtros',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (_selectedTags.isNotEmpty)
-                      TextButton(
-                        onPressed: _clearFilters,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          minimumSize: const Size(0, 32),
-                        ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
                         child: Text(
-                          'Limpar',
-                          style: TextStyle(
-                            fontSize: (MediaQuery.of(context).size.width * 0.034).clamp(12.0, 14.0),
+                          'Filtros',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (_selectedTags.isNotEmpty)
+                        TextButton(
+                          onPressed: _clearFilters,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: const Size(0, 32),
+                          ),
+                          child: Text(
+                            'Limpar',
+                            style: TextStyle(
+                              fontSize:
+                                  (MediaQuery.of(context).size.width * 0.034)
+                                      .clamp(12.0, 14.0),
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: BookTags.allTags.map((tag) {
-                    final isSelected = _selectedTags.contains(tag);
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    return FilterChip(
-                      label: Text(
-                        BookTags.tagLabels[tag] ?? tag,
-                        style: TextStyle(
-                          fontSize: (screenWidth * 0.032).clamp(11.0, 13.0),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: BookTags.allTags.map((tag) {
+                      final isSelected = _selectedTags.contains(tag);
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      return FilterChip(
+                        label: Text(
+                          BookTags.tagLabels[tag] ?? tag,
+                          style: TextStyle(
+                            fontSize: (screenWidth * 0.032).clamp(11.0, 13.0),
+                          ),
                         ),
-                      ),
-                      selected: isSelected,
-                      onSelected: (_) => _toggleTag(tag),
-                      backgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
-                      selectedColor: theme.colorScheme.primaryContainer,
-                      checkmarkColor: theme.colorScheme.onPrimaryContainer,
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? theme.colorScheme.onPrimaryContainer
-                            : theme.colorScheme.onSurfaceVariant,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: (screenWidth * 0.02).clamp(6.0, 8.0),
-                        vertical: (screenWidth * 0.01).clamp(3.0, 4.0),
-                      ),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
+                        selected: isSelected,
+                        onSelected: (_) => _toggleTag(tag),
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        selectedColor: theme.colorScheme.primaryContainer,
+                        checkmarkColor: theme.colorScheme.onPrimaryContainer,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? theme.colorScheme.onPrimaryContainer
+                              : theme.colorScheme.onSurfaceVariant,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: (screenWidth * 0.02).clamp(6.0, 8.0),
+                          vertical: (screenWidth * 0.01).clamp(3.0, 4.0),
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -279,10 +281,16 @@ class _LibraryPageState extends State<LibraryPage> {
                     children: [
                       Icon(
                         Icons.library_books_outlined,
-                        size: (MediaQuery.of(context).size.height * 0.08).clamp(40.0, 64.0),
+                        size: (MediaQuery.of(context).size.height * 0.08).clamp(
+                          40.0,
+                          64.0,
+                        ),
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(8.0, 16.0)),
+                      SizedBox(
+                        height: (MediaQuery.of(context).size.height * 0.02)
+                            .clamp(8.0, 16.0),
+                      ),
                       Flexible(
                         child: Text(
                           'Nenhum livro encontrado',
@@ -293,7 +301,10 @@ class _LibraryPageState extends State<LibraryPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      SizedBox(height: (MediaQuery.of(context).size.height * 0.01).clamp(4.0, 8.0)),
+                      SizedBox(
+                        height: (MediaQuery.of(context).size.height * 0.01)
+                            .clamp(4.0, 8.0),
+                      ),
                       Flexible(
                         child: Text(
                           'Tente ajustar os filtros',
