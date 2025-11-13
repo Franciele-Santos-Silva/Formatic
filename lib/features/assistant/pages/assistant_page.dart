@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use, avoid_single_cascade_in_expression_statements, use_build_context_synchronously
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
@@ -10,9 +11,11 @@ import 'package:formatic/core/utils/snackbar_utils.dart';
 import 'package:formatic/models/assistant/ai_history.dart';
 import 'package:formatic/services/assistant/ai_history_service.dart';
 import 'package:formatic/services/auth/auth_service.dart';
+import 'package:formatic/services/profile/profile_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:xml/xml.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AssistantPage extends StatefulWidget {
   final bool isDarkMode;
@@ -28,7 +31,8 @@ class AssistantPage extends StatefulWidget {
   State<AssistantPage> createState() => _AssistantPageState();
 }
 
-class _AssistantPageState extends State<AssistantPage> {
+class _AssistantPageState extends State<AssistantPage>
+    with WidgetsBindingObserver {
   static const _helpyName = 'Helpy';
   static const _systemPrompt =
       'Você é Helpy, tutora virtual da Formatic. '
@@ -49,12 +53,87 @@ class _AssistantPageState extends State<AssistantPage> {
 
   final AiHistoryService _aiHistoryService = AiHistoryService();
   final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
+  String? _userAvatarUrl;
+  bool _avatarLoaded = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _apiKey = dotenv.maybeGet('DEEPSEEK_API_KEY')?.trim();
     _loadHistory();
+    _loadUserAvatar();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Recarrega o avatar quando o app volta ao foco
+      _avatarLoaded = false;
+      _loadUserAvatar();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recarrega o avatar apenas se ainda não foi carregado neste build
+    if (!_avatarLoaded) {
+      _loadUserAvatar();
+    }
+  }
+
+  Future<void> _loadUserAvatar() async {
+    if (_avatarLoaded) return;
+
+    try {
+      final user = _authService.currentUser;
+      if (user != null) {
+        // Primeiro tenta pegar do cache local (SharedPreferences)
+        final prefs = await SharedPreferences.getInstance();
+        final localPath = prefs.getString('profile_avatar_path');
+
+        if (localPath != null && localPath.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              _userAvatarUrl = localPath;
+              _avatarLoaded = true;
+            });
+          }
+          return;
+        }
+
+        // Se não tem local, tenta do servidor
+        final profile = await _profileService.getProfile(user.id);
+
+        if (profile?.avatarUrl != null && profile!.avatarUrl!.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              _userAvatarUrl = profile.avatarUrl;
+              _avatarLoaded = true;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() => _avatarLoaded = true);
+          }
+        }
+      }
+    } catch (e) {
+      // Silently fail - user will see default icon
+      if (mounted) {
+        setState(() => _avatarLoaded = true);
+      }
+    }
   }
 
   static const _welcomeText =
@@ -853,6 +932,59 @@ class _AssistantPageState extends State<AssistantPage> {
         .toList();
   }
 
+  Widget _buildAvatar({required bool isUser}) {
+    if (isUser) {
+      return CircleAvatar(
+        radius: 18,
+        backgroundColor: Colors.grey[300],
+        child: _userAvatarUrl != null && _userAvatarUrl!.isNotEmpty
+            ? ClipOval(
+                child: _userAvatarUrl!.startsWith('http')
+                    ? Image.network(
+                        _userAvatarUrl!,
+                        fit: BoxFit.cover,
+                        width: 36,
+                        height: 36,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person,
+                            size: 20,
+                            color: Color(0xFF8B2CF5),
+                          );
+                        },
+                      )
+                    : Image.file(
+                        File(_userAvatarUrl!),
+                        fit: BoxFit.cover,
+                        width: 36,
+                        height: 36,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person,
+                            size: 20,
+                            color: Color(0xFF8B2CF5),
+                          );
+                        },
+                      ),
+              )
+            : const Icon(Icons.person, size: 20, color: Color(0xFF8B2CF5)),
+      );
+    } else {
+      return CircleAvatar(
+        radius: 18,
+        backgroundColor: Colors.transparent,
+        child: ClipOval(
+          child: Image.asset(
+            'assets/images/helpy/card_1.png',
+            fit: BoxFit.cover,
+            width: 36,
+            height: 36,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -872,47 +1004,56 @@ class _AssistantPageState extends State<AssistantPage> {
                     final isTypingIndicator =
                         _sendingMessage && index == _messages.length;
                     if (isTypingIndicator) {
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 16, right: 50),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF2D2A39)
-                                : const Color(0xFFE9E9ED),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    isDark
-                                        ? Colors.white70
-                                        : const Color(0xFF8B2CF5),
-                                  ),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAvatar(isUser: false),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '$_helpyName está pensando...',
-                                style: TextStyle(
+                                decoration: BoxDecoration(
                                   color: isDark
-                                      ? Colors.white.withOpacity(0.85)
-                                      : Colors.black87,
-                                  fontWeight: FontWeight.w500,
+                                      ? const Color(0xFF2D2A39)
+                                      : const Color(0xFFE9E9ED),
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              isDark
+                                                  ? Colors.white70
+                                                  : const Color(0xFF8B2CF5),
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '$_helpyName está pensando...',
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white.withOpacity(0.85)
+                                            : Colors.black87,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       );
                     }
@@ -925,35 +1066,46 @@ class _AssistantPageState extends State<AssistantPage> {
                               ? const Color.fromARGB(255, 65, 61, 79)
                               : const Color(0xFFE9E9ED));
 
-                    return Align(
-                      alignment: isUser
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _copyMessage(message),
-                        onLongPress: message.author == _MessageAuthor.user
-                            ? () => _editMessage(index)
-                            : null,
-                        child: Container(
-                          margin: EdgeInsets.only(
-                            bottom: 16,
-                            left: isUser ? 50 : 0,
-                            right: isUser ? 0 : 50,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: isUser
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
+                        children: [
+                          if (!isUser) ...[
+                            _buildAvatar(isUser: false),
+                            const SizedBox(width: 8),
+                          ],
+                          Flexible(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _copyMessage(message),
+                              onLongPress: message.author == _MessageAuthor.user
+                                  ? () => _editMessage(index)
+                                  : null,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: bubbleColor,
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: _buildFormattedMessage(
+                                  message,
+                                  isDark: isDark,
+                                ),
+                              ),
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: bubbleColor,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: _buildFormattedMessage(
-                            message,
-                            isDark: isDark,
-                          ),
-                        ),
+                          if (isUser) ...[
+                            const SizedBox(width: 8),
+                            _buildAvatar(isUser: true),
+                          ],
+                        ],
                       ),
                     );
                   },
@@ -1095,13 +1247,6 @@ class _AssistantPageState extends State<AssistantPage> {
         ),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
-    super.dispose();
   }
 }
 

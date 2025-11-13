@@ -81,6 +81,8 @@ flutter:
     - .env
     - assets/images/
     - assets/images/livros/
+    - assets/images/helpy/
+    - assets/images/cards/
     - assets/pdfs/
 
   # An image asset can refer to one or more resolution-specific "variants", see
