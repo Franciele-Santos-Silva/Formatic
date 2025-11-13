@@ -16,7 +16,7 @@ class FlashcardEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -36,13 +36,17 @@ class FlashcardEmptyState extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: EdgeInsets.all((screenWidth * 0.08).clamp(16.0, 32.0)),
+                  padding: EdgeInsets.all(
+                    (screenWidth * 0.08).clamp(16.0, 32.0),
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withOpacity(0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Container(
-                    padding: EdgeInsets.all((screenWidth * 0.06).clamp(12.0, 24.0)),
+                    padding: EdgeInsets.all(
+                      (screenWidth * 0.06).clamp(12.0, 24.0),
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor.withOpacity(0.12),
                       shape: BoxShape.circle,
@@ -104,8 +108,12 @@ class FlashcardEmptyState extends StatelessWidget {
                 ),
                 SizedBox(height: (screenHeight * 0.03).clamp(16.0, 24.0)),
                 Container(
-                  margin: EdgeInsets.symmetric(horizontal: (screenWidth * 0.05).clamp(10.0, 20.0)),
-                  padding: EdgeInsets.all((screenWidth * 0.05).clamp(12.0, 20.0)),
+                  margin: EdgeInsets.symmetric(
+                    horizontal: (screenWidth * 0.05).clamp(10.0, 20.0),
+                  ),
+                  padding: EdgeInsets.all(
+                    (screenWidth * 0.05).clamp(12.0, 20.0),
+                  ),
                   decoration: BoxDecoration(
                     color: isDarkMode
                         ? AppTheme.darkBackground.withOpacity(0.6)
@@ -158,7 +166,7 @@ class _TipItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Row(
       children: [
         Container(
@@ -167,7 +175,11 @@ class _TipItem extends StatelessWidget {
             color: AppTheme.primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppTheme.primaryColor, size: (screenWidth * 0.05).clamp(16.0, 20.0)),
+          child: Icon(
+            icon,
+            color: AppTheme.primaryColor,
+            size: (screenWidth * 0.05).clamp(16.0, 20.0),
+          ),
         ),
         SizedBox(width: (screenWidth * 0.04).clamp(12.0, 16.0)),
         Expanded(
