@@ -85,4 +85,4 @@ Formatic é um aplicativo móvel desenvolvido em Flutter para ajudar estudantes 
 
     flutter run
 
-**Formatic - Transformando a maneira como você estuda!**
+## Formatic - Transformando a maneira como você estuda
