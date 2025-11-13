@@ -24,7 +24,6 @@ class SnackbarUtils {
   ) {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) {
-      // Fallback to the native snackbar if no overlay is available.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/supabase_config.dart';
 
@@ -41,7 +42,15 @@ class AuthService {
     );
   }
 
-  Future<void> signOut() async => await client.auth.signOut();
+  Future<void> signOut() async {
+    final userId = client.auth.currentUser?.id;
+    if (userId != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('quote_for_user_$userId');
+    }
+
+    await client.auth.signOut();
+  }
 
   User? get currentUser => client.auth.currentUser;
 }

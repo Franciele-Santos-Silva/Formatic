@@ -66,15 +66,12 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   void _fitWidth() {
-    // Aproximação: um pouco mais que o padrão para ocupar melhor a largura.
-    // O usuário pode refinar com +/-
     final newLevel = 1.3;
     _pdfViewerController.zoomLevel = newLevel;
     setState(() => _zoomLevel = newLevel);
   }
 
   void _onDoubleTap() {
-    // Toggle rápido de zoom: 1.0 <-> 2.0
     final newLevel = _zoomLevel <= 1.05 ? 2.0 : 1.0;
     _pdfViewerController.zoomLevel = newLevel;
     setState(() => _zoomLevel = newLevel);
@@ -89,7 +86,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   void _onHorizontalDragEnd(DragEndDetails details) {
-    // Só navega por gesto quando não está com zoom (como Kindle)
     if (_zoomLevel > 1.05) return;
     const threshold = 60.0; // arrasto mínimo em px
     if (_dragDeltaX <= -threshold && _currentPage < _totalPages) {
@@ -215,7 +211,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Verifica se é URL ou asset
     final isNetworkPdf =
         widget.book.pdfPath.startsWith('http://') ||
         widget.book.pdfPath.startsWith('https://');
@@ -224,13 +219,11 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       appBar: AppBar(
         title: Text(widget.book.title),
         actions: [
-          // Informações do livro
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: _showBookInfo,
             tooltip: 'Informações do livro',
           ),
-          // Opções de ajuste
           PopupMenuButton<String>(
             tooltip: 'Opções de zoom',
             onSelected: (value) {
@@ -251,11 +244,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       ),
       body: Column(
         children: [
-          // Viewer PDF
           Expanded(
             child: Stack(
               children: [
-                // Envolve o viewer em GestureDetector para gestos tipo Kindle (swipe horizontal e duplo toque)
                 isNetworkPdf
                     ? GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -326,7 +317,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                         ),
                       ),
 
-                // Loading indicator (usa surface do tema para não estourar no dark)
                 if (_isLoading)
                   Container(
                     color: Theme.of(
@@ -338,7 +328,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             ),
           ),
 
-          // Barra de controles (apenas navegação e indicador)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
@@ -354,7 +343,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Botão página anterior
                   IconButton(
                     icon: const Icon(Icons.chevron_left),
                     onPressed: _currentPage > 1
@@ -362,7 +350,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                         : null,
                     tooltip: 'Página anterior',
                   ),
-                  // Botão próxima página (logo ao lado da anterior)
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
                     onPressed: _currentPage < _totalPages
@@ -373,7 +360,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
                   const SizedBox(width: 8),
 
-                  // Indicador central (somente páginas)
                   InkWell(
                     onTap: _totalPages > 0 ? _showPageNavigator : null,
                     child: Container(
@@ -405,7 +391,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Zoom - e Zoom + (lado a lado, na barra inferior)
                   IconButton(
                     icon: const Icon(Icons.remove),
                     onPressed: _zoomLevel > 0.5 ? _zoomOut : null,

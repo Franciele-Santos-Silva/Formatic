@@ -31,10 +31,9 @@ class AssistantPage extends StatefulWidget {
 class _AssistantPageState extends State<AssistantPage> {
   static const _helpyName = 'Helpy';
   static const _systemPrompt =
-      'Você é Helpy, a tutora virtual da Formatic focada em apoiar estudantes. '
-      'Forneça explicações claras, objetivas e em português, reforce técnicas de organização '
-      'e proponha próximas etapas ou exercícios práticos sempre que possível.';
-  static const int _maxFileBytes = 5 * 1024 * 1024;
+      'Você é Helpy, tutora virtual da Formatic. '
+      'Seja direta, objetiva e responda em português com explicações claras e concisas.';
+  static const int _maxFileBytes = 20 * 1024 * 1024;
   static const int _maxContextMessages = 14;
 
   final List<_ChatMessage> _messages = <_ChatMessage>[];
@@ -59,8 +58,8 @@ class _AssistantPageState extends State<AssistantPage> {
   }
 
   static const _welcomeText =
-      'Olá! Sou a $_helpyName, sua tutora virtual. Conte o que você precisa estudar '
-      'ou quais dificuldades enfrentou e eu preparo um plano de estudos personalizado.';
+      'Olá! Sou a $_helpyName, sua tutora virtual. '
+      'Como posso ajudar você hoje?';
 
   _ChatMessage _welcomeMessage() => const _ChatMessage(
     author: _MessageAuthor.assistant,
@@ -223,8 +222,9 @@ class _AssistantPageState extends State<AssistantPage> {
       body: jsonEncode({
         'model': 'deepseek-chat',
         'messages': _buildChatPayload(),
-        'temperature': 0.7,
-        'top_p': 0.8,
+        'temperature': 0.5, // Reduzido de 0.7 para 0.5 (mais focado e rápido)
+        'top_p': 0.7, // Reduzido de 0.8 para 0.7
+        'max_tokens': 800, // Limitado para respostas mais curtas
       }),
     );
 
@@ -449,7 +449,7 @@ class _AssistantPageState extends State<AssistantPage> {
         if (mounted) {
           SnackbarUtils.showError(
             context,
-            'Arquivo muito grande. Limite de 5MB.',
+            'Arquivo muito grande. Limite de 20MB.',
           );
         }
         return;
@@ -469,7 +469,10 @@ class _AssistantPageState extends State<AssistantPage> {
         return;
       }
 
-      final limitedForAssistant = _limitText(cleaned, 8000);
+      final limitedForAssistant = _limitText(
+        cleaned,
+        5000,
+      ); // Reduzido de 8000 para 5000
       setState(() {
         _processingUpload = false;
         _pendingDocuments.add(

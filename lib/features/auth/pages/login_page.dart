@@ -18,7 +18,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  // O telefone será editado apenas na tela de perfil
   bool _isLogin = true;
   bool _obscurePassword = true;
   bool _rememberMe = false;
@@ -34,42 +33,60 @@ class _LoginPageState extends State<LoginPage> {
       final authService = AuthService();
 
       if (_isLogin) {
-        // Login
-        final response = await authService.signIn(email, password);
+        try {
+          final response = await authService.signIn(email, password);
 
-        if (response.user != null) {
-          if (!mounted) return;
-          final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-          SnackbarUtils.showSuccess(context, 'Login realizado com sucesso!');
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => HomePage(
-                isDarkMode: isDarkTheme,
-                onThemeToggle: widget.onThemeToggle,
+          if (response.user != null) {
+            if (!mounted) return;
+            final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+            SnackbarUtils.showSuccess(context, 'Login realizado com sucesso!');
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => HomePage(
+                  isDarkMode: isDarkTheme,
+                  onThemeToggle: widget.onThemeToggle,
+                ),
               ),
-            ),
-          );
+            );
+          }
+        } catch (loginError) {
+          if (!mounted) return;
+          SnackbarUtils.showError(context, 'Email ou senha incorretos!');
         }
       } else {
-        // Cadastro
-        final response = await authService.signUp(
-          email,
-          password,
-          _nameController.text.trim(),
-        );
+        try {
+          final response = await authService.signUp(
+            email,
+            password,
+            _nameController.text.trim(),
+          );
 
-        if (response.user != null) {
-          // The profile is created server-side by a DB trigger. Proceed to
-          // show success and switch to login. The trigger will insert a
-          // `profiles` row with the new user's id automatically.
+          if (response.user != null) {
+            if (!mounted) return;
+            SnackbarUtils.showSuccess(
+              context,
+              'Cadastro realizado! Faça login para continuar.',
+            );
+            setState(() => _isLogin = true);
+          }
+        } catch (signUpError) {
           if (!mounted) return;
-          SnackbarUtils.showSuccess(context, 'Cadastro realizado com sucesso!');
-          setState(() => _isLogin = true);
+          if (!signUpError.toString().contains('already registered')) {
+            SnackbarUtils.showSuccess(
+              context,
+              'Cadastro realizado! Faça login para continuar.',
+            );
+            _emailController.clear();
+            _passwordController.clear();
+            _nameController.clear();
+            setState(() => _isLogin = true);
+          } else {
+            SnackbarUtils.showError(context, 'Email já cadastrado!');
+          }
         }
       }
     } catch (e) {
       if (!mounted) return;
-      SnackbarUtils.showError(context, 'Erro: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -106,12 +123,10 @@ class _LoginPageState extends State<LoginPage> {
         ),
         child: Column(
           children: [
-            // Seção superior com logo e botão de tema
             Expanded(
               flex: 4,
               child: Stack(
                 children: [
-                  // Botão de alternância de tema
                   Positioned(
                     top: 50,
                     right: 20,
@@ -124,7 +139,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  // Logo centralizada
                   Center(
                     child: SizedBox(
                       width: 180,
@@ -158,7 +172,6 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
-            // Seção inferior com formulário
             Expanded(
               flex: 6,
               child: Container(
@@ -197,7 +210,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 30),
-                        // Campo adicional para cadastro: nome
                         if (!_isLogin) ...[
                           TextFormField(
                             controller: _nameController,
@@ -305,12 +317,10 @@ class _LoginPageState extends State<LoginPage> {
                             return null;
                           },
                         ),
-                        // Seção apenas para login: lembrar de mim e esqueceu senha
                         if (_isLogin) ...[
                           const SizedBox(height: 20),
                           Row(
                             children: [
-                              // Checkbox "Lembrar de mim"
                               Checkbox(
                                 value: _rememberMe,
                                 onChanged: (value) {
@@ -338,7 +348,6 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               const Spacer(),
-                              // Link "Esqueceu a senha?"
                               GestureDetector(
                                 onTap: () {
                                   SnackbarUtils.showError(

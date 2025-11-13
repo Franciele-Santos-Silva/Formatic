@@ -1,7 +1,6 @@
 import 'package:formatic/models/library/book.dart';
 
 class BookService {
-  // Lista de livros de exemplo (depois pode ser substituída por dados do Supabase)
   static final List<Book> _sampleBooks = [
     Book(
       id: '1',
@@ -92,14 +91,11 @@ class BookService {
     ),
   ];
 
-  // Buscar todos os livros
   Future<List<Book>> getAllBooks() async {
-    // Simula delay de rede
     await Future.delayed(const Duration(milliseconds: 500));
     return _sampleBooks;
   }
 
-  // Buscar livros por texto (título, autor, descrição)
   Future<List<Book>> searchBooks(String query) async {
     await Future.delayed(const Duration(milliseconds: 300));
 
@@ -115,7 +111,6 @@ class BookService {
     }).toList();
   }
 
-  // Filtrar livros por tags
   Future<List<Book>> filterByTags(List<String> selectedTags) async {
     await Future.delayed(const Duration(milliseconds: 300));
 
@@ -124,12 +119,10 @@ class BookService {
     }
 
     return _sampleBooks.where((book) {
-      // Verifica se o livro tem pelo menos uma das tags selecionadas
       return book.tags.any((tag) => selectedTags.contains(tag));
     }).toList();
   }
 
-  // Buscar e filtrar combinados
   Future<List<Book>> searchAndFilter(
     String query,
     List<String> selectedTags,
@@ -138,7 +131,6 @@ class BookService {
 
     List<Book> results = _sampleBooks;
 
-    // Aplicar busca por texto
     if (query.isNotEmpty) {
       final lowerQuery = query.toLowerCase();
       results = results.where((book) {
@@ -148,7 +140,6 @@ class BookService {
       }).toList();
     }
 
-    // Aplicar filtro de tags
     if (selectedTags.isNotEmpty) {
       results = results.where((book) {
         return book.tags.any((tag) => selectedTags.contains(tag));
@@ -158,7 +149,6 @@ class BookService {
     return results;
   }
 
-  // Buscar livro por ID
   Future<Book?> getBookById(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
 
@@ -169,7 +159,6 @@ class BookService {
     }
   }
 
-  // Obter livros recentes
   Future<List<Book>> getRecentBooks({int limit = 5}) async {
     await Future.delayed(const Duration(milliseconds: 300));
 

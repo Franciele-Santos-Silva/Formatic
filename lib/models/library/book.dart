@@ -56,9 +56,7 @@ class Book {
   }
 }
 
-// Tags disponíveis
 class BookTags {
-  // Áreas do conhecimento
   static const String cienciasExatas = 'ciencias-exatas';
   static const String cienciasHumanas = 'ciencias-humanas';
   static const String cienciasBiologicas = 'ciencias-biologicas';
@@ -67,7 +65,6 @@ class BookTags {
   static const String direito = 'direito';
   static const String administracao = 'administracao';
 
-  // Disciplinas específicas
   static const String computacao = 'computacao';
   static const String matematica = 'matematica';
   static const String fisica = 'fisica';
@@ -84,13 +81,11 @@ class BookTags {
   static const String teoria = 'teoria';
   static const String resumo = 'resumo';
 
-  // Nível
   static const String introducao = 'introducao';
   static const String intermediario = 'intermediario';
   static const String avancado = 'avancado';
 
   static const Map<String, String> tagLabels = {
-    // Áreas
     cienciasExatas: 'Ciências Exatas',
     cienciasHumanas: 'Ciências Humanas',
     cienciasBiologicas: 'Ciências Biológicas',
@@ -99,7 +94,6 @@ class BookTags {
     direito: 'Direito',
     administracao: 'Administração',
 
-    // Disciplinas
     computacao: 'Computação',
     matematica: 'Matemática',
     fisica: 'Física',
@@ -110,20 +104,17 @@ class BookTags {
     medicina: 'Medicina',
     psicologia: 'Psicologia',
 
-    // Tipo
     livroTexto: 'Livro-texto',
     livroExercicios: 'Exercícios',
     teoria: 'Teoria',
     resumo: 'Resumo',
 
-    // Nível
     introducao: 'Introdução',
     intermediario: 'Intermediário',
     avancado: 'Avançado',
   };
 
   static const List<String> allTags = [
-    // Áreas
     cienciasExatas,
     cienciasHumanas,
     cienciasBiologicas,
@@ -132,7 +123,6 @@ class BookTags {
     direito,
     administracao,
 
-    // Disciplinas
     computacao,
     matematica,
     fisica,
@@ -143,13 +133,11 @@ class BookTags {
     medicina,
     psicologia,
 
-    // Tipo
     livroTexto,
     livroExercicios,
     teoria,
     resumo,
 
-    // Nível
     introducao,
     intermediario,
     avancado,
