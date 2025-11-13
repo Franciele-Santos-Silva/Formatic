@@ -652,8 +652,7 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           const SizedBox(height: 8),
                           LayoutBuilder(
                             builder: (context, constraints) {
-                              final cellSize =
-                                  (constraints.maxWidth - 24) / 7;
+                              final cellSize = (constraints.maxWidth - 24) / 7;
 
                               final totalCells = weekDayOffset + daysInMonth;
                               final totalRows = (totalCells / 7).ceil();
