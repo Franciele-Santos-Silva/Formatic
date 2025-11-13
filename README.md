@@ -35,7 +35,7 @@ Formatic é um aplicativo móvel desenvolvido em Flutter para ajudar estudantes 
 - Sessões completadas  
 - Progresso diário e semanal  
 
-### Tecnologias Utilizadas
+# Tecnologias Utilizadas
 
 ## Frontend
 
