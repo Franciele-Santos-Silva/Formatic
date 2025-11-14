@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:formatic/core/theme/button_styles.dart';
 import 'package:formatic/core/utils/snackbar_utils.dart';
-import 'package:formatic/features/auth/pages/login_page.dart';
 import 'package:formatic/features/home/widgets/app_top_nav_bar.dart';
 import 'package:formatic/models/auth/user_profile.dart';
 import 'package:formatic/services/auth/auth_service.dart';
@@ -45,7 +43,6 @@ class PhoneNumberFormatter extends TextInputFormatter {
     );
   }
 }
-
 
 class ProfilePage extends StatefulWidget {
   final bool isDarkMode;
@@ -127,24 +124,6 @@ class _ProfilePageState extends State<ProfilePage> {
           labelColor,
           iconColor,
         ),
-        const SizedBox(height: 18),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.redAccent,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            onPressed: () => _confirmDeleteProfile(context),
-            child: const Text(
-              'Deletar perfil',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -212,7 +191,6 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _loading = true;
   final _nameController = TextEditingController();
 
-
   Future<void> _saveAvatarPath(String path) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('profile_avatar_path', path);
@@ -251,8 +229,7 @@ class _ProfilePageState extends State<ProfilePage> {
             }
           }
         } catch (e) {
-          if (mounted) {
-          }
+          if (mounted) {}
         }
       }
     } catch (e) {
@@ -470,59 +447,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (mounted) {
       setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _confirmDeleteProfile(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Deletar perfil'),
-          content: const Text(
-            'Tem certeza de que deseja deletar seu perfil? Esta ação não pode ser desfeita.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Não'),
-            ),
-            ElevatedButton(
-              style: purpleElevatedStyle(),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Sim'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm == true) {
-      if (!mounted) return;
-      await _deleteProfileAndSignOut();
-    }
-  }
-
-  Future<void> _deleteProfileAndSignOut() async {
-    if (_uid == null) return;
-    setState(() => _loading = true);
-    final navigator = Navigator.of(context);
-    try {
-      final profileService = ProfileService();
-      await profileService.deleteProfile(_uid!);
-      await AuthService().signOut();
-      if (!mounted) return;
-      navigator.pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => LoginPage(onThemeToggle: widget.onThemeToggle),
-        ),
-        (route) => false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      SnackbarUtils.showError(context, 'Erro ao deletar perfil: $e');
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
   }
 }

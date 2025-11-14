@@ -125,51 +125,35 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             Expanded(
               flex: 3,
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 30,
-                    right: 15,
-                    child: GestureDetector(
-                      onTap: widget.onThemeToggle,
-                      child: Icon(
-                        isDark ? Icons.light_mode : Icons.dark_mode,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
+              child: Center(
+                child: SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
-                            child: Icon(
-                              Icons.lock_outline,
-                              size: 48,
-                              color: mainColor,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.lock_outline,
+                          size: 48,
+                          color: mainColor,
+                        ),
+                      );
+                    },
                   ),
-                ],
+                ),
               ),
             ),
             Expanded(

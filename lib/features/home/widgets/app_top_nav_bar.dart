@@ -59,10 +59,6 @@ class AppTopNavBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       actions: [
-        IconButton(
-          icon: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
-          onPressed: onThemeToggle,
-        ),
         if (onProfileTap != null)
           IconButton(
             icon: const Icon(Icons.person),

@@ -217,6 +217,11 @@ class _FlashcardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardIsOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final buttonSize = keyboardIsOpen ? 28.0 : 32.0;
+    final iconSize = keyboardIsOpen ? 14.0 : 16.0;
+    final trailingWidth = keyboardIsOpen ? 62.0 : 72.0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
@@ -299,48 +304,57 @@ class _FlashcardTile extends StatelessWidget {
             ),
           ),
           trailing: SizedBox(
-            width: 85,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: const Icon(
+            width: trailingWidth,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  width: buttonSize,
+                  height: buttonSize,
+                  margin: const EdgeInsets.only(right: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
                       Icons.edit_rounded,
                       color: Colors.white,
-                      size: 18,
+                      size: iconSize,
                     ),
                     onPressed: onEdit,
                     tooltip: 'Editar',
-                    splashRadius: 18,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
+                    constraints: BoxConstraints(
+                      minWidth: buttonSize,
+                      minHeight: buttonSize,
                     ),
                   ),
-                  IconButton(
+                ),
+                Container(
+                  width: buttonSize,
+                  height: buttonSize,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
                     icon: Icon(
                       Icons.delete_rounded,
                       color: Colors.white.withOpacity(0.9),
-                      size: 18,
+                      size: iconSize,
                     ),
                     onPressed: onDelete,
                     tooltip: 'Deletar',
-                    splashRadius: 18,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
+                    constraints: BoxConstraints(
+                      minWidth: buttonSize,
+                      minHeight: buttonSize,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           children: [
