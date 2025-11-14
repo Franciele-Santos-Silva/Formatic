@@ -10,7 +10,7 @@ Headers:
   apikey: SUA_CHAVE_ANONIMA
   Content-Type: application/json
 
-  Authorization: Bearer aqui é o token do usuáio
+  Authorization: Bearer aqui é o token do usuário
 
 https://enenypufgzvuwyznkxat.supabase.co/rest/v1/profiles?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuZW55cHVmZ3p2dXd5em5reGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDgwMDksImV4cCI6MjA3NjkyNDAwOX0.U3xTNecMPuVdZhzfFTp4fKEPw3cgSUiAWxb6d8jAOWQ
 
