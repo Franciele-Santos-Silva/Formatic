@@ -3,8 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ActivityLoggerService {
   static const String _activityKey = 'recent_activities';
-  static const int _maxActivities =
-      5; // Mantém apenas as últimas 50 atividades
+  static const int _maxActivities = 5;
 
   static const String actionAdd = 'add';
   static const String actionEdit = 'edit';
@@ -14,10 +13,9 @@ class ActivityLoggerService {
   static const String typeFlashcard = 'flashcard';
   static const String typeBook = 'book';
 
-  /// Registra uma nova atividade
   static Future<void> logActivity({
-    required String action, // 'add', 'edit', 'delete'
-    required String type, // 'task', 'flashcard', 'book'
+    required String action,
+    required String type,
     required String itemId,
     required String itemName,
   }) async {
@@ -42,7 +40,6 @@ class ActivityLoggerService {
     await prefs.setString(_activityKey, jsonString);
   }
 
-  /// Obtém todas as atividades registradas
   static Future<List<Map<String, dynamic>>> getActivities() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_activityKey);
@@ -59,7 +56,6 @@ class ActivityLoggerService {
     }
   }
 
-  /// Obtém atividades das últimas 24 horas
   static Future<List<Map<String, dynamic>>> getRecentActivities({
     int hoursLimit = 24,
   }) async {
@@ -72,19 +68,16 @@ class ActivityLoggerService {
     }).toList();
   }
 
-  /// Obtém a última atividade (para o badge)
   static Future<Map<String, dynamic>?> getLastActivity() async {
     final activities = await getRecentActivities(hoursLimit: 24);
     return activities.isNotEmpty ? activities.first : null;
   }
 
-  /// Limpa todas as atividades
   static Future<void> clearActivities() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_activityKey);
   }
 
-  /// Remove atividades antigas (mais de 7 dias)
   static Future<void> cleanOldActivities() async {
     final prefs = await SharedPreferences.getInstance();
     final activities = await getActivities();
@@ -99,7 +92,6 @@ class ActivityLoggerService {
     await prefs.setString(_activityKey, jsonString);
   }
 
-  /// Formata o texto da ação
   static String getActionText(String action, String type) {
     switch (action) {
       case actionAdd:
