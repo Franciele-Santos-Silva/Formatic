@@ -14,10 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    // Samsung Galaxy M22 resolution: 720x1600 (HD+)
-    // Using a scaled down version for desktop (45% scale for better fit)
     const ui.Size mobileSize = ui.Size(360, 800);
-    // Minimum size set to Samsung M22 resolution (scaled to 45%)
     const ui.Size minSize = ui.Size(360, 800);
 
     try {
@@ -34,7 +31,6 @@ Future<void> main() async {
       window_size.setWindowFrame(
         ui.Rect.fromLTWH(left, top, mobileSize.width, mobileSize.height),
       );
-      // Set minimum window size to Samsung M22 dimensions
       window_size.setWindowMinSize(minSize);
     } catch (e) {
       // ignore: avoid_print

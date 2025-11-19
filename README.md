@@ -10,12 +10,6 @@ Formatic é um aplicativo móvel desenvolvido em Flutter para ajudar estudantes 
 - Organização por matérias e disciplinas  
 - Revisão espaçada inteligente  
 
-### Timer Pomodoro
-
-- Sessões de foco (25 min) e descanso (5 min)  
-- Registro automático do tempo estudado  
-- Métricas de produtividade  
-
 ### Gerenciamento de Tarefas
 
 - Criação e priorização de tarefas  
